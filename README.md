@@ -102,15 +102,16 @@ Create `Backend/.env`:
 PORT=3000
 MONGODB_URI=<your_mongodb_connection_string>
 JWT_SECRET=<your_jwt_secret>
-GOOGLE_MAPS_API=<your_google_maps_api_key>
 
-# SMTP (Gmail recommended)
+# Optional — easier to set in Admin > Integrations, which overrides these
+GOOGLE_MAPS_API=<your_google_maps_api_key>
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your@gmail.com
 SMTP_PASS=your_app_password
-SMTP_FROM="Uber Clone Support" <your@gmail.com>
 ```
+
+> Changing `JWT_SECRET` logs everyone out and makes keys saved in Admin > Integrations unreadable (re-enter them).
 
 Start backend:
 ```bash
@@ -137,6 +138,54 @@ npm run dev
 
 ### 4. Access the app
 Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
+## 🛡️ Admin Panel
+
+Open `/admin/login` on the frontend (e.g. http://localhost:5173/admin/login). Side-menu sections:
+
+| Section | What it does |
+|---|---|
+| Dashboard | Today's revenue, active rides, online captains, completion rate, daily rides & revenue charts (7/30/90 days), revenue by vehicle, top captains, latest rides |
+| Live monitor | Active rides and online captains (free / on a ride, last location), refreshes every 10 s |
+| Rides | Search (place, rider, captain, plate), filter by status / vehicle / dates, CSV export, ride detail with timeline, cancel an active ride (rider & captain are notified) |
+| Captains | Search & filter, earnings and ride stats, edit profile & vehicle, set offline, block / unblock, delete |
+| Riders | Search & filter, ride and spend stats, edit, block / unblock, delete |
+| Reports | Any date range up to a year: revenue, completion rate, new sign-ups, cancellations, daily charts, top captains & riders, CSV downloads |
+| Fare settings | Base fare, per-km and per-minute rates for car / auto / moto, with a live price preview; new bookings use them immediately |
+| Integrations | Google Maps API key, OpenStreetMap (country filter, contact email) and SMTP email, each with an on/off switch and a live "Test connection". Saved values override `.env`; keys/passwords are stored AES-encrypted (key derived from `JWT_SECRET`) and never sent back to the browser |
+| Notifications | Per-event switches for Email / SMS / WhatsApp / Push (rider: captain accepted + OTP, ride started, receipt, admin cancel; captain: new request, cancellations, online payment, earnings), a "send test" form and a 30-day delivery log |
+| Admin users | Add or remove admins |
+
+### 💳 Payments (Razorpay)
+
+Turn on **Razorpay payments** in Admin > Integrations (start with `rzp_test_` keys). Riders then see
+"UPI / Card / Netbanking" on the pay screen next to cash (cash can be switched off).
+
+- `POST /payments/create-order` creates a Razorpay order for the ride; `POST /payments/verify` checks the
+  checkout signature (HMAC with the key secret) and marks the ride paid; the captain is told instantly.
+- `POST /payments/webhook` is a backup for closed browsers — add it in Razorpay → Webhooks with
+  `payment.captured` and `order.paid` (needs a public URL).
+- When a captain finishes an unpaid ride it is recorded as **cash**. Admins can refund online payments from the ride page.
+
+### 🔔 Notifications
+
+Sent by the backend in the background (never blocks a ride). Channels:
+**Email** (SMTP), **SMS** and **WhatsApp** (Twilio — riders/captains need a phone number, collected at signup),
+and **browser push** (Firebase Cloud Messaging — users tap the bell in the app header).
+Set `FRONTEND_URL` in `Backend/.env` (default `http://localhost:5173`) so push notifications open the right site.
+| My account | Change your name and password |
+
+Blocked riders and captains are signed out, can't log in, and blocked captains get no ride requests.
+
+Create an admin, or reset an existing admin's password:
+```bash
+cd Backend
+npm run create-admin -- admin@example.com "a-strong-password" "Admin Name"
+```
+
+Admin sessions last 8 hours and use their own token, separate from rider/captain logins.
 
 ---
 

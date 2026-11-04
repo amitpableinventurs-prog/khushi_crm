@@ -29,6 +29,19 @@ const captainSchema = new mongoose.Schema({
     socketId: {
         type: String,
     },
+    isBlocked: {
+        type: Boolean,
+        default: false,
+    },
+    phone: {
+        type: String,
+        trim: true,
+    },
+    // Firebase Cloud Messaging device tokens for browser push
+    pushTokens: {
+        type: [ String ],
+        select: false,
+    },
     resetOtp: {
         type: String,
         select: false,
@@ -75,7 +88,7 @@ const captainSchema = new mongoose.Schema({
             type: Number,
         }
     }
-})
+}, { timestamps: true })
 
 
 captainSchema.methods.generateAuthToken = function () {

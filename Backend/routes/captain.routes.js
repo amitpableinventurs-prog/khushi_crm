@@ -12,7 +12,8 @@ router.post('/register', [
     body('vehicle.color').isLength({ min: 3 }).withMessage('Color must be at least 3 characters long'),
     body('vehicle.plate').isLength({ min: 3 }).withMessage('Plate must be at least 3 characters long'),
     body('vehicle.capacity').isInt({ min: 1 }).withMessage('Capacity must be at least 1'),
-    body('vehicle.vehicleType').isIn([ 'car', 'motorcycle', 'auto' ]).withMessage('Invalid vehicle type')
+    body('vehicle.vehicleType').isIn([ 'car', 'motorcycle', 'auto' ]).withMessage('Invalid vehicle type'),
+    body('phone').optional({ values: 'falsy' }).matches(/^\+?[\d\s-]{10,16}$/).withMessage('Phone must be 10 digits, or include the country code like +91...')
 ],
     captainController.registerCaptain
 )

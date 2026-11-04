@@ -10,6 +10,7 @@ import LookingForDriver from '../components/LookingForDriver'
 import WaitingForDriver from '../components/WaitingForDriver'
 import { SocketContext } from '../context/SocketContext'
 import { UserDataContext } from '../context/UserContext'
+import PushNotificationButton from '../components/PushNotificationButton'
 import { useNavigate, Link } from 'react-router-dom'
 import LiveTracking from '../components/LiveTracking'
 
@@ -265,9 +266,13 @@ const Home = () => {
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude, longitude } = pos.coords
             try {
-                const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
-                if (res.data && res.data.display_name) {
-                    setPickup(res.data.display_name)
+                // goes through the backend so it follows Admin > Integrations (Google Maps / OpenStreetMap)
+                const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/maps/reverse-geocode`, {
+                    params: { lat: latitude, lng: longitude },
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                })
+                if (res.data && res.data.address) {
+                    setPickup(res.data.address)
                 } else {
                     setPickup(`Current Location (${latitude.toFixed(4)}° N, ${longitude.toFixed(4)}° E)`)
                 }
@@ -292,6 +297,7 @@ const Home = () => {
                         <p className='text-[10px] uppercase tracking-wider text-gray-400 font-semibold'>Logged in as</p>
                         <p className='text-xs font-bold capitalize text-gray-800'>{user?.fullname?.firstname || 'Rider'}</p>
                     </div>
+                    <PushNotificationButton />
                     <Link
                         to='/profile'
                         className='h-9 w-9 bg-gray-100/80 hover:bg-black hover:text-white flex items-center justify-center rounded-xl transition-all duration-200 text-gray-700 shadow-sm'

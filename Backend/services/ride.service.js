@@ -1,5 +1,7 @@
 const rideModel = require('../models/ride.model');
 const mapService = require('./maps.service');
+const settingService = require('./setting.service');
+const paymentService = require('./payment.service');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 
@@ -11,31 +13,14 @@ async function getFare(pickup, destination) {
 
     const distanceTime = await mapService.getDistanceTime(pickup, destination);
 
-    const baseFare = {
-        auto: 30,
-        car: 50,
-        moto: 20
-    };
+    // Rates are editable from the admin panel (Fare settings)
+    const rates = await settingService.getFareSettings();
+    const km = distanceTime.distance.value / 1000;
+    const minutes = distanceTime.duration.value / 60;
 
-    const perKmRate = {
-        auto: 10,
-        car: 15,
-        moto: 8
-    };
-
-    const perMinuteRate = {
-        auto: 2,
-        car: 3,
-        moto: 1.5
-    };
-
-
-
-    const fare = {
-        auto: Math.round(baseFare.auto + ((distanceTime.distance.value / 1000) * perKmRate.auto) + ((distanceTime.duration.value / 60) * perMinuteRate.auto)),
-        car: Math.round(baseFare.car + ((distanceTime.distance.value / 1000) * perKmRate.car) + ((distanceTime.duration.value / 60) * perMinuteRate.car)),
-        moto: Math.round(baseFare.moto + ((distanceTime.distance.value / 1000) * perKmRate.moto) + ((distanceTime.duration.value / 60) * perMinuteRate.moto))
-    };
+    const fare = Object.fromEntries(Object.entries(rates).map(([ type, rate ]) => (
+        [ type, Math.round(rate.baseFare + (km * rate.perKm) + (minutes * rate.perMinute)) ]
+    )));
 
     return fare;
 
@@ -70,6 +55,7 @@ module.exports.createRide = async ({
         destination,
         otp: getOtp(6),
         fare: fare[ vehicleType ],
+        vehicleType,
         distance: distanceTime?.distance?.value || 5400,
         duration: distanceTime?.duration?.value || 900
     })
@@ -151,10 +137,20 @@ module.exports.endRide = async ({ rideId, captain }) => {
         throw new Error('Ride not ongoing')
     }
 
+    // Not paid online -> the captain finishing the ride confirms the cash was collected
+    const payment = {}
+    if (ride.paymentStatus !== 'paid') {
+        const { allowCash, online } = await paymentService.getConfig()
+        if (online && !allowCash) {
+            throw new Error('The rider has not paid online yet')
+        }
+        Object.assign(payment, { paymentMethod: 'cash', paymentStatus: 'paid', paidAt: new Date() })
+    }
+
     // Use findOneAndUpdate with timestamps option to ensure updatedAt is set
     await rideModel.findOneAndUpdate(
         { _id: rideId },
-        { status: 'completed', completedAt: new Date() },
+        { status: 'completed', completedAt: new Date(), ...payment },
         { new: true, timestamps: true }
     )
 
@@ -178,7 +174,7 @@ module.exports.cancelRide = async ({ rideId, userId }) => {
 
     await rideModel.findOneAndUpdate(
         { _id: rideId },
-        { status: 'cancelled' }
+        { status: 'cancelled', cancelledBy: 'user' }
     );
 
     return ride;

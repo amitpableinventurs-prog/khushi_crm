@@ -1,8 +1,28 @@
 const axios = require('axios');
 const captainModel = require('../models/captain.model');
+const integrationService = require('./integration.service');
+
+// Google key only when the admin has Google Maps switched on (Admin > Integrations)
+async function googleKey() {
+    const google = await integrationService.get('googleMaps');
+    return google.enabled && google.apiKey ? google.apiKey : null;
+}
+
+// Nominatim settings; its usage policy asks for an identifying User-Agent
+async function nominatim() {
+    const osm = await integrationService.get('openStreetMap');
+    return {
+        enabled: osm.enabled,
+        country: osm.countryCode ? `&countrycodes=${encodeURIComponent(osm.countryCode)}` : '',
+        headers: { 'User-Agent': `KhushiTransport/1.0${osm.contactEmail ? ` (${osm.contactEmail})` : ''}` },
+    };
+}
+
+module.exports.googleKey = googleKey;
+module.exports.nominatim = nominatim;
 
 module.exports.getAddressCoordinate = async (address) => {
-    const apiKey = process.env.GOOGLE_MAPS_API;
+    const apiKey = await googleKey();
     if (apiKey) {
         try {
             const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
@@ -15,13 +35,16 @@ module.exports.getAddressCoordinate = async (address) => {
     }
 
     // Fallback using OpenStreetMap Nominatim API
-    try {
-        const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=in&limit=1`;
-        const res = await axios.get(nomUrl, { headers: { 'User-Agent': 'UberCloneApp/1.0' } });
-        if (res.data && res.data.length > 0) {
-            return { ltd: parseFloat(res.data[0].lat), lng: parseFloat(res.data[0].lon) };
-        }
-    } catch (err) {}
+    const osm = await nominatim();
+    if (osm.enabled) {
+        try {
+            const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}${osm.country}&limit=1`;
+            const res = await axios.get(nomUrl, { headers: osm.headers, timeout: 4000 });
+            if (res.data && res.data.length > 0) {
+                return { ltd: parseFloat(res.data[0].lat), lng: parseFloat(res.data[0].lon) };
+            }
+        } catch (err) {}
+    }
 
     // Deterministic hash based coords for fallback
     let hash = 0;
@@ -37,7 +60,7 @@ module.exports.getDistanceTime = async (origin, destination) => {
         throw new Error('Origin and destination are required');
     }
 
-    const apiKey = process.env.GOOGLE_MAPS_API;
+    const apiKey = await googleKey();
     if (apiKey) {
         try {
             const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(origin)}&destinations=${encodeURIComponent(destination)}&key=${apiKey}`;
@@ -82,7 +105,7 @@ module.exports.getDistanceTime = async (origin, destination) => {
 module.exports.getAutoCompleteSuggestions = async (input) => {
     if (!input || input.length < 2) return [];
 
-    const apiKey = process.env.GOOGLE_MAPS_API;
+    const apiKey = await googleKey();
     if (apiKey) {
         try {
             const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${apiKey}`;
@@ -94,13 +117,16 @@ module.exports.getAutoCompleteSuggestions = async (input) => {
     }
 
     // OpenStreetMap Nominatim live search fallback
-    try {
-        const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input)}&countrycodes=in&limit=5`;
-        const res = await axios.get(nomUrl, { headers: { 'User-Agent': 'UberCloneApp/1.0' }, timeout: 1000 });
-        if (res.data && res.data.length > 0) {
-            return res.data.map(item => item.display_name);
-        }
-    } catch (err) {}
+    const osm = await nominatim();
+    if (osm.enabled) {
+        try {
+            const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input)}${osm.country}&limit=5`;
+            const res = await axios.get(nomUrl, { headers: osm.headers, timeout: 1000 });
+            if (res.data && res.data.length > 0) {
+                return res.data.map(item => item.display_name);
+            }
+        } catch (err) {}
+    }
 
     // Fallback real Indian locations matching query
     const sampleLocations = [
@@ -115,11 +141,37 @@ module.exports.getAutoCompleteSuggestions = async (input) => {
     return sampleLocations;
 };
 
+// Address for a GPS position (rider's 'use current location'); null when no provider answers
+module.exports.reverseGeocode = async (lat, lng) => {
+    const apiKey = await googleKey();
+    if (apiKey) {
+        try {
+            const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
+            const response = await axios.get(url, { timeout: 4000 });
+            if (response.data.status === 'OK' && response.data.results.length > 0) {
+                return response.data.results[0].formatted_address;
+            }
+        } catch (err) {}
+    }
+
+    const osm = await nominatim();
+    if (osm.enabled) {
+        try {
+            const nomUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+            const res = await axios.get(nomUrl, { headers: osm.headers, timeout: 4000 });
+            if (res.data?.display_name) return res.data.display_name;
+        } catch (err) {}
+    }
+
+    return null;
+};
+
 module.exports.getCaptainsInTheRadius = async (ltd, lng, radius) => {
     let captains = [];
     if (ltd && lng) {
         try {
             captains = await captainModel.find({
+                isBlocked: { $ne: true },
                 location: {
                     $geoWithin: {
                         $centerSphere: [[lng, ltd], radius / 6371]
@@ -130,7 +182,7 @@ module.exports.getCaptainsInTheRadius = async (ltd, lng, radius) => {
     }
 
     if (!captains || captains.length === 0) {
-        captains = await captainModel.find({});
+        captains = await captainModel.find({ isBlocked: { $ne: true } });
     }
 
     return captains;

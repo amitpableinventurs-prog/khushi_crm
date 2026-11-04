@@ -11,7 +11,7 @@ module.exports.registerCaptain = async (req, res, next) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { fullname, email, password, vehicle } = req.body;
+    const { fullname, email, password, vehicle, phone } = req.body;
     const cleanEmail = email.toLowerCase().trim();
 
     const isCaptainAlreadyExist = await captainModel.findOne({ email: cleanEmail });
@@ -30,7 +30,8 @@ module.exports.registerCaptain = async (req, res, next) => {
         color: vehicle.color,
         plate: vehicle.plate,
         capacity: vehicle.capacity,
-        vehicleType: vehicle.vehicleType
+        vehicleType: vehicle.vehicleType,
+        phone: phone?.trim() || undefined
     });
 
     captain.status = 'active';
@@ -60,6 +61,10 @@ module.exports.loginCaptain = async (req, res, next) => {
 
     if (!isMatch) {
         return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    if (captain.isBlocked) {
+        return res.status(403).json({ message: 'Your account has been blocked. Please contact support.' });
     }
 
     // Set captain status to active in DB on login

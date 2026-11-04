@@ -23,6 +23,13 @@ router.get('/get-suggestions',
     mapController.getAutoCompleteSuggestions
 )
 
+router.get('/reverse-geocode',
+    query('lat').isFloat({ min: -90, max: 90 }),
+    query('lng').isFloat({ min: -180, max: 180 }),
+    authMiddleware.authUser,
+    mapController.reverseGeocode
+)
+
 
 
 module.exports = router;

@@ -9,6 +9,7 @@ import { SocketContext } from '../context/SocketContext'
 import { CaptainDataContext } from '../context/CapatainContext'
 import axios from 'axios'
 import LiveTracking from '../components/LiveTracking'
+import PushNotificationButton from '../components/PushNotificationButton'
 
 const CaptainHome = () => {
     const [ridePopupPanel, setRidePopupPanel] = useState(false)
@@ -162,6 +163,7 @@ const CaptainHome = () => {
                 </div>
 
                 <div className='flex items-center gap-2'>
+                    <PushNotificationButton />
                     <Link
                         to='/captain-profile'
                         className='h-9 w-9 bg-gray-100/80 hover:bg-black hover:text-white flex items-center justify-center rounded-xl transition-all duration-200 text-gray-700 shadow-sm'

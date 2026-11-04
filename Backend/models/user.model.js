@@ -29,6 +29,19 @@ const userSchema = new mongoose.Schema({
     socketId: {
         type: String,
     },
+    isBlocked: {
+        type: Boolean,
+        default: false,
+    },
+    phone: {
+        type: String,
+        trim: true,
+    },
+    // Firebase Cloud Messaging device tokens for browser push
+    pushTokens: {
+        type: [ String ],
+        select: false,
+    },
     resetOtp: {
         type: String,
         select: false,
@@ -37,7 +50,7 @@ const userSchema = new mongoose.Schema({
         type: Date,
         select: false,
     },
-})
+}, { timestamps: true })
 
 userSchema.methods.generateAuthToken = function () {
     const token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET, { expiresIn: '24h' });

@@ -15,6 +15,23 @@ const Riding = () => {
     // step: 'riding' | 'pay' | 'paid'
     const [step, setStep] = useState('riding')
 
+    // Payment options come from Admin > Integrations (Razorpay on/off, cash allowed)
+    const [payConfig, setPayConfig] = useState({ online: false, allowCash: true })
+    const [method, setMethod] = useState('cash')
+    const [paidMethod, setPaidMethod] = useState('cash')
+    const [paymentId, setPaymentId] = useState('')
+    const [isPaying, setIsPaying] = useState(false)
+    const [payError, setPayError] = useState('')
+
+    useEffect(() => {
+        axios.get(`${import.meta.env.VITE_BASE_URL}/payments/config`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }).then(res => {
+            setPayConfig(res.data)
+            setMethod(res.data.online ? 'online' : 'cash')
+        }).catch(() => {})
+    }, [])
+
     useEffect(() => {
         if (!currentRide) {
             axios.get(`${import.meta.env.VITE_BASE_URL}/rides/user-active-ride`, {
@@ -37,12 +54,69 @@ const Riding = () => {
     }, [socket, navigate, currentRide])
 
     const handlePay = () => {
+        if (method === 'online') {
+            payOnline()
+            return
+        }
         // Notify captain that payment has been made
         socket.emit('payment-made', {
             rideId: ride?._id,
             captainId: ride?.captain?._id
         })
+        setPaidMethod('cash')
         setStep('paid')
+    }
+
+    const loadCheckout = () => new Promise((resolve, reject) => {
+        if (window.Razorpay) return resolve()
+        const script = document.createElement('script')
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+        script.onload = resolve
+        script.onerror = () => reject(new Error('Could not load Razorpay. Check your internet connection.'))
+        document.body.appendChild(script)
+    })
+
+    // Razorpay Checkout: backend creates the order, the popup takes payment, backend verifies the signature
+    const payOnline = async () => {
+        setPayError('')
+        setIsPaying(true)
+        const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        try {
+            const { data: order } = await axios.post(`${import.meta.env.VITE_BASE_URL}/payments/create-order`, { rideId: ride?._id }, { headers })
+            await loadCheckout()
+
+            const checkout = new window.Razorpay({
+                key: order.keyId,
+                order_id: order.orderId,
+                amount: order.amount,
+                currency: order.currency,
+                name: payConfig.businessName || 'Khushi Transport',
+                description: `Ride to ${ride?.destination?.split(',')[0] || 'destination'}`,
+                prefill: order.prefill,
+                theme: { color: '#000000' },
+                handler: async (response) => {
+                    try {
+                        await axios.post(`${import.meta.env.VITE_BASE_URL}/payments/verify`, { rideId: ride?._id, ...response }, { headers })
+                        setPaymentId(response.razorpay_payment_id)
+                        setPaidMethod('online')
+                        setStep('paid')
+                    } catch (err) {
+                        setPayError(err.response?.data?.message || 'We could not confirm the payment. If money was deducted, it will be refunded.')
+                    } finally {
+                        setIsPaying(false)
+                    }
+                },
+                modal: { ondismiss: () => setIsPaying(false) },
+            })
+            checkout.on('payment.failed', (response) => {
+                setPayError(response.error?.description || 'Payment failed. Please try again or choose cash.')
+                setIsPaying(false)
+            })
+            checkout.open()
+        } catch (err) {
+            setPayError(err.response?.data?.message || err.message || 'Could not start the payment.')
+            setIsPaying(false)
+        }
     }
 
     useEffect(() => {
@@ -66,8 +140,10 @@ const Riding = () => {
                     <div className='absolute -top-1 -right-1 h-5 w-5 rounded-full bg-green-400 animate-ping'></div>
                 </div>
                 <h2 className='text-2xl font-black text-gray-900 mb-1 text-center'>Payment Confirmed!</h2>
-                <p className='text-gray-500 text-sm text-center mb-1'>You paid <span className='font-bold text-gray-800'>₹{ride?.fare}</span> cash</p>
-                <p className='text-gray-400 text-xs text-center mb-6'>Waiting for captain to confirm receipt...</p>
+                <p className='text-gray-500 text-sm text-center mb-1'>You paid <span className='font-bold text-gray-800'>₹{ride?.fare}</span> {paidMethod === 'online' ? 'online' : 'cash'}</p>
+                <p className='text-gray-400 text-xs text-center mb-6'>
+                    {paidMethod === 'online' ? `Payment ID ${paymentId} · your captain has been notified` : 'Waiting for captain to confirm receipt...'}
+                </p>
 
                 {/* Ride summary */}
                 <div className='w-full max-w-sm bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4'>
@@ -173,11 +249,10 @@ const Riding = () => {
                         <h3 className='font-bold mb-4 text-gray-800'>Payment Method</h3>
                         <div className='space-y-3'>
                             {[
-                                { icon: 'ri-money-rupee-circle-fill', label: 'Cash', sub: 'Pay driver directly', color: 'text-green-500', active: true },
-                                { icon: 'ri-bank-card-fill', label: 'Card', sub: 'Coming soon', color: 'text-blue-500', disabled: true },
-                                { icon: 'ri-wallet-3-fill', label: 'UPI / Wallet', sub: 'Coming soon', color: 'text-purple-500', disabled: true },
-                            ].map((m, i) => (
-                                <div key={i} className={`flex items-center gap-4 p-3.5 rounded-xl border-2 ${m.active ? 'border-black bg-gray-50' : 'border-gray-100 opacity-40'} ${m.disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                                payConfig.online && { key: 'online', icon: 'ri-bank-card-fill', label: 'UPI / Card / Netbanking', sub: 'Secure online payment by Razorpay', color: 'text-blue-500' },
+                                payConfig.allowCash && { key: 'cash', icon: 'ri-money-rupee-circle-fill', label: 'Cash', sub: 'Pay driver directly', color: 'text-green-500' },
+                            ].filter(Boolean).map(option => ({ ...option, active: method === option.key })).map((m) => (
+                                <button type='button' key={m.key} onClick={() => setMethod(m.key)} aria-pressed={m.active} className={`w-full text-left flex items-center gap-4 p-3.5 rounded-xl border-2 cursor-pointer ${m.active ? 'border-black bg-gray-50' : 'border-gray-100'}`}>
                                     <div className='h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0'>
                                         <i className={`${m.icon} text-xl ${m.color}`}></i>
                                     </div>
@@ -186,7 +261,7 @@ const Riding = () => {
                                         <p className='text-xs text-gray-400'>{m.sub}</p>
                                     </div>
                                     {m.active && <i className="ri-check-line text-black font-bold text-lg"></i>}
-                                </div>
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -194,14 +269,18 @@ const Riding = () => {
 
                 {/* Confirm payment */}
                 <div className='p-5 bg-white border-t border-gray-100'>
+                    {payError && <p role='alert' className='text-red-500 text-xs text-center font-medium mb-3'>{payError}</p>}
                     <button
                         onClick={handlePay}
-                        className='w-full bg-black text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 hover:bg-gray-800 active:scale-[0.98] transition-all'
+                        disabled={isPaying}
+                        className='w-full bg-black text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 hover:bg-gray-800 active:scale-[0.98] transition-all disabled:opacity-60'
                     >
-                        <i className="ri-check-double-fill text-lg"></i>
-                        Confirm Cash Payment — ₹{ride?.fare}
+                        <i className={method === 'online' ? 'ri-secure-payment-fill text-lg' : 'ri-check-double-fill text-lg'}></i>
+                        {method === 'online' ? (isPaying ? 'Opening payment…' : `Pay ₹${ride?.fare} online`) : `Confirm Cash Payment — ₹${ride?.fare}`}
                     </button>
-                    <p className='text-center text-xs text-gray-400 mt-3'>By confirming, you agree the cash has been paid to the captain.</p>
+                    <p className='text-center text-xs text-gray-400 mt-3'>
+                        {method === 'online' ? 'You will pay securely on Razorpay. Your captain is told as soon as it goes through.' : 'By confirming, you agree the cash has been paid to the captain.'}
+                    </p>
                 </div>
             </div>
         )

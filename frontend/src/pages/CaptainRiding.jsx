@@ -10,19 +10,24 @@ const CaptainRiding = () => {
     const [finishRidePanel, setFinishRidePanel] = useState(false)
     const [paymentReceived, setPaymentReceived] = useState(false)
     const [showPaymentAlert, setShowPaymentAlert] = useState(false)
+    const [paymentMethod, setPaymentMethod] = useState('cash')
     const finishRidePanelRef = useRef(null)
     const location = useLocation()
     const rideData = location.state?.ride
     const { socket } = useContext(SocketContext)
 
     useEffect(() => {
-        const handlePaymentReceived = () => {
+        const handlePaymentReceived = (data) => {
+            const method = data?.method === 'online' ? 'online' : 'cash'
+            setPaymentMethod(method)
             setPaymentReceived(true)
             setShowPaymentAlert(true)
             setFinishRidePanel(true)
 
             // Browser notification
-            const notifBody = `Rider confirmed ₹${rideData?.fare} cash. Tap to confirm and finish ride.`
+            const notifBody = method === 'online'
+                ? `Rider paid ₹${rideData?.fare} online. Tap to finish the ride.`
+                : `Rider confirmed ₹${rideData?.fare} cash. Tap to confirm and finish ride.`
             if ('Notification' in window) {
                 if (Notification.permission === 'granted') {
                     new Notification('💰 Payment Received!', { body: notifBody })
@@ -57,7 +62,7 @@ const CaptainRiding = () => {
                         </div>
                         <div className='flex-1 min-w-0'>
                             <p className='font-black text-base leading-tight'>Payment Received! 💰</p>
-                            <p className='text-green-100 text-xs mt-0.5'>Rider paid ₹{rideData?.fare} cash — confirm to finish ride</p>
+                            <p className='text-green-100 text-xs mt-0.5'>{paymentMethod === 'online' ? `Rider paid ₹${rideData?.fare} online — you can finish the ride` : `Rider paid ₹${rideData?.fare} cash — confirm to finish ride`}</p>
                         </div>
                         <button
                             onClick={() => setShowPaymentAlert(false)}
@@ -127,6 +132,7 @@ const CaptainRiding = () => {
                     ride={rideData}
                     setFinishRidePanel={setFinishRidePanel}
                     paymentReceived={paymentReceived}
+                    paymentMethod={paymentMethod}
                 />
             </div>
         </div>

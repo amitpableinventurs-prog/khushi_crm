@@ -4,6 +4,7 @@ const mapService = require('../services/maps.service');
 const { sendMessageToSocketId } = require('../socket');
 const rideModel = require('../models/ride.model');
 const captainModel = require('../models/captain.model');
+const notificationService = require('../services/notification.service');
 
 module.exports.createRide = async (req, res) => {
     const errors = validationResult(req);
@@ -30,6 +31,8 @@ module.exports.createRide = async (req, res) => {
                 sendMessageToSocketId(freshCaptain.socketId, { event: 'new-ride', data: rideWithUser });
             }
         }
+
+        notificationService.notify('captain.new_ride_request', { rideId: ride._id, captainIds: captainsInRadius.map(c => c._id) });
     } catch (err) {
         console.error("createRide error:", err);
         if (!res.headersSent) {
@@ -61,6 +64,7 @@ module.exports.confirmRide = async (req, res) => {
     try {
         const ride = await rideService.confirmRide({ rideId, captain: req.captain });
         sendMessageToSocketId(ride.user.socketId, { event: 'ride-confirmed', data: ride });
+        notificationService.notify('rider.ride_accepted', { rideId: ride._id });
         return res.status(200).json(ride);
     } catch (err) {
         console.log(err);
@@ -77,6 +81,7 @@ module.exports.startRide = async (req, res) => {
     try {
         const ride = await rideService.startRide({ rideId, otp, captain: req.captain });
         sendMessageToSocketId(ride.user.socketId, { event: 'ride-started', data: ride });
+        notificationService.notify('rider.ride_started', { rideId: ride._id });
         return res.status(200).json(ride);
     } catch (err) {
         return res.status(500).json({ message: err.message });
@@ -92,6 +97,8 @@ module.exports.endRide = async (req, res) => {
     try {
         const ride = await rideService.endRide({ rideId, captain: req.captain });
         sendMessageToSocketId(ride.user.socketId, { event: 'ride-ended', data: ride });
+        notificationService.notify('rider.ride_completed', { rideId: ride._id });
+        notificationService.notify('captain.ride_completed', { rideId: ride._id });
         return res.status(200).json(ride);
     } catch (err) {
         return res.status(500).json({ message: err.message });
@@ -200,6 +207,9 @@ module.exports.cancelRide = async (req, res) => {
                 event: 'ride-cancelled',
                 data: { rideId }
             });
+        }
+        if (ride.captain) {
+            notificationService.notify('captain.ride_cancelled_by_rider', { rideId: ride._id });
         }
 
         return res.status(200).json({ message: 'Ride cancelled successfully' });

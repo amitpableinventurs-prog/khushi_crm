@@ -10,6 +10,7 @@ const CaptainSignup = () => {
   const [password, setPassword] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [phone, setPhone] = useState('')
   const [vehicleColor, setVehicleColor] = useState('')
   const [vehiclePlate, setVehiclePlate] = useState('')
   const [vehicleCapacity, setVehicleCapacity] = useState('')
@@ -30,6 +31,7 @@ const CaptainSignup = () => {
         fullname: { firstname: firstName, lastname: lastName },
         email,
         password,
+        phone: phone.trim() || undefined,
         vehicle: {
           color: vehicleColor,
           plate: vehiclePlate,
@@ -45,7 +47,7 @@ const CaptainSignup = () => {
         navigate('/captain-home')
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Captain registration failed.')
+      setError(err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Captain registration failed.')
     } finally {
       setIsLoading(false)
     }
@@ -97,6 +99,18 @@ const CaptainSignup = () => {
                 className='bg-white/10 border border-white/10 rounded-2xl px-4 py-3 w-full text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400 text-sm'
                 type='email'
                 placeholder='captain@example.com'
+              />
+            </div>
+
+            <div>
+              <label className='block text-xs font-semibold text-gray-400 uppercase mb-1'>Mobile Number <span className='normal-case font-normal text-gray-500'>(optional, for ride SMS / WhatsApp)</span></label>
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className='bg-white/10 border border-white/10 rounded-2xl px-4 py-3 w-full text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400 text-sm'
+                type='tel'
+                autoComplete='tel'
+                placeholder='98765 43210'
               />
             </div>
 

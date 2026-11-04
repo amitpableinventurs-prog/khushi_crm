@@ -10,6 +10,7 @@ const UserSignup = () => {
   const [password, setPassword] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [phone, setPhone] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -25,7 +26,8 @@ const UserSignup = () => {
       const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/users/register`, {
         fullname: { firstname: firstName, lastname: lastName },
         email,
-        password
+        password,
+        phone: phone.trim() || undefined
       })
 
       if (response.status === 201) {
@@ -35,7 +37,7 @@ const UserSignup = () => {
         navigate('/home')
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please check inputs.')
+      setError(err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Registration failed. Please check inputs.')
     } finally {
       setIsLoading(false)
     }
@@ -87,6 +89,18 @@ const UserSignup = () => {
                 className='bg-white/10 border border-white/10 rounded-2xl px-4 py-3 w-full text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm'
                 type='email'
                 placeholder='name@example.com'
+              />
+            </div>
+
+            <div>
+              <label className='block text-xs font-semibold text-gray-400 uppercase mb-1'>Mobile Number <span className='normal-case font-normal text-gray-500'>(optional, for ride SMS / WhatsApp)</span></label>
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className='bg-white/10 border border-white/10 rounded-2xl px-4 py-3 w-full text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm'
+                type='tel'
+                autoComplete='tel'
+                placeholder='98765 43210'
               />
             </div>
 

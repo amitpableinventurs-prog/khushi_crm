@@ -1,9 +1,11 @@
-import React from 'react'
+import React, { useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 
-const FinishRide = ({ ride, setFinishRidePanel, paymentReceived }) => {
+const FinishRide = ({ ride, setFinishRidePanel, paymentReceived, paymentMethod = 'cash' }) => {
     const navigate = useNavigate()
+    const [error, setError] = useState('')
+    const paidOnline = paymentReceived && paymentMethod === 'online'
 
     async function endRide() {
         try {
@@ -17,6 +19,7 @@ const FinishRide = ({ ride, setFinishRidePanel, paymentReceived }) => {
             }
         } catch (err) {
             console.error('Error ending ride:', err)
+            setError(err.response?.data?.message || 'Could not finish the ride. Please try again.')
         }
     }
 
@@ -39,7 +42,7 @@ const FinishRide = ({ ride, setFinishRidePanel, paymentReceived }) => {
                     </div>
                     <div>
                         <p className='font-bold text-green-700 text-sm'>Payment Received!</p>
-                        <p className='text-xs text-green-600'>Rider has confirmed cash payment of ₹{ride?.fare}</p>
+                        <p className='text-xs text-green-600'>{paidOnline ? `Rider paid ₹${ride?.fare} online` : `Rider has confirmed cash payment of ₹${ride?.fare}`}</p>
                     </div>
                     <span className='ml-auto font-black text-green-700 text-lg'>₹{ride?.fare}</span>
                 </div>
@@ -50,7 +53,7 @@ const FinishRide = ({ ride, setFinishRidePanel, paymentReceived }) => {
                     </div>
                     <div>
                         <p className='font-bold text-yellow-700 text-sm'>Awaiting Payment</p>
-                        <p className='text-xs text-yellow-600'>Ask rider to confirm ₹{ride?.fare} cash payment</p>
+                        <p className='text-xs text-yellow-600'>Ask the rider to pay ₹{ride?.fare} in the app (online or cash)</p>
                     </div>
                 </div>
             )}
@@ -98,13 +101,15 @@ const FinishRide = ({ ride, setFinishRidePanel, paymentReceived }) => {
                     </div>
                     <div>
                         <p className='text-xs text-gray-400'>Payment</p>
-                        <p className='font-bold text-gray-800'>₹{ride?.fare} · Cash</p>
+                        <p className='font-bold text-gray-800'>₹{ride?.fare} · {paidOnline ? 'Online' : 'Cash'}</p>
                     </div>
                     {paymentReceived && (
                         <span className='ml-auto bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider'>Paid</span>
                     )}
                 </div>
             </div>
+
+            {error && <p role='alert' className='text-red-500 text-sm text-center font-medium mb-3'>{error}</p>}
 
             {paymentReceived ? (
                 <button

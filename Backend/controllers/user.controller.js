@@ -10,7 +10,7 @@ module.exports.registerUser = async (req, res, next) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { fullname, email, password } = req.body;
+    const { fullname, email, password, phone } = req.body;
     const cleanEmail = email.toLowerCase().trim();
 
     const isUserAlready = await userModel.findOne({ email: cleanEmail });
@@ -25,7 +25,8 @@ module.exports.registerUser = async (req, res, next) => {
         firstname: fullname.firstname,
         lastname: fullname.lastname,
         email: cleanEmail,
-        password: hashedPassword
+        password: hashedPassword,
+        phone: phone?.trim() || undefined
     });
 
     const token = user.generateAuthToken();
@@ -53,6 +54,10 @@ module.exports.loginUser = async (req, res, next) => {
 
     if (!isMatch) {
         return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    if (user.isBlocked) {
+        return res.status(403).json({ message: 'Your account has been blocked. Please contact support.' });
     }
 
     const token = user.generateAuthToken();

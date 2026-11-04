@@ -56,6 +56,35 @@ const rideSchema = new mongoose.Schema({
     completedAt: {
         type: Date,
     },
+    vehicleType: {
+        type: String,
+        enum: [ 'auto', 'car', 'moto' ],
+    },
+    cancelledBy: {
+        type: String,
+        enum: [ 'user', 'admin' ],
+    },
+    cancelReason: {
+        type: String,
+    },
+    paymentMethod: {
+        type: String,
+        enum: [ 'cash', 'online' ],
+    },
+    paymentStatus: {
+        type: String,
+        enum: [ 'pending', 'paid', 'refunded' ],
+        default: 'pending',
+    },
+    paidAt: {
+        type: Date,
+    },
+    refundId: {
+        type: String,
+    },
+    refundedAt: {
+        type: Date,
+    },
 }, { timestamps: true })
 
 module.exports = mongoose.model('ride', rideSchema);
