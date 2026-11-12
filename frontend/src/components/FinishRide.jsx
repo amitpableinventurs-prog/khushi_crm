@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import axios from 'axios'
+import GoodsSummary from './GoodsSummary'
 import { useNavigate } from 'react-router-dom'
 
 const FinishRide = ({ ride, setFinishRidePanel, paymentReceived, paymentMethod = 'cash' }) => {
@@ -32,7 +33,7 @@ const FinishRide = ({ ride, setFinishRidePanel, paymentReceived, paymentMethod =
                 <i className="text-3xl text-gray-300 ri-arrow-down-wide-line"></i>
             </h5>
 
-            <h3 className='text-2xl font-bold mb-5'>Finish Ride</h3>
+            <h3 className='text-2xl font-bold mb-5'>Finish Delivery</h3>
 
             {/* Payment status banner */}
             {paymentReceived ? (
@@ -66,7 +67,7 @@ const FinishRide = ({ ride, setFinishRidePanel, paymentReceived, paymentMethod =
                     </div>
                     <div>
                         <h2 className='text-base font-bold capitalize'>{ride?.user?.fullname?.firstname} {ride?.user?.fullname?.lastname}</h2>
-                        <p className='text-xs text-gray-500'>Rider</p>
+                        <p className='text-xs text-gray-500'>Customer</p>
                     </div>
                 </div>
                 <div className='text-right'>
@@ -91,7 +92,7 @@ const FinishRide = ({ ride, setFinishRidePanel, paymentReceived, paymentMethod =
                         <i className="ri-map-pin-fill text-red-500 text-[10px]"></i>
                     </div>
                     <div>
-                        <p className='text-xs text-gray-400'>Destination</p>
+                        <p className='text-xs text-gray-400'>Drop</p>
                         <p className='font-semibold text-gray-800 text-sm'>{ride?.destination}</p>
                     </div>
                 </div>
@@ -109,6 +110,8 @@ const FinishRide = ({ ride, setFinishRidePanel, paymentReceived, paymentMethod =
                 </div>
             </div>
 
+            <GoodsSummary ride={ride} showReceiverPhone className='mb-6 -mt-3' />
+
             {error && <p role='alert' className='text-red-500 text-sm text-center font-medium mb-3'>{error}</p>}
 
             {paymentReceived ? (
@@ -116,7 +119,7 @@ const FinishRide = ({ ride, setFinishRidePanel, paymentReceived, paymentMethod =
                     onClick={endRide}
                     className='w-full bg-green-500 hover:bg-green-600 active:scale-[0.98] text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 text-lg transition-all'
                 >
-                    <i className="ri-flag-fill"></i> Confirm & Finish Ride
+                    <i className="ri-flag-fill"></i> Confirm & Finish Delivery
                 </button>
             ) : (
                 <div className='space-y-3'>
@@ -124,9 +127,9 @@ const FinishRide = ({ ride, setFinishRidePanel, paymentReceived, paymentMethod =
                         onClick={endRide}
                         className='w-full bg-gray-900 hover:bg-black active:scale-[0.98] text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 text-base transition-all'
                     >
-                        <i className="ri-flag-fill"></i> End Ride (Cash not confirmed yet)
+                        <i className="ri-flag-fill"></i> End Delivery (Cash not confirmed yet)
                     </button>
-                    <p className='text-center text-xs text-gray-400'>Wait for rider to pay before finishing</p>
+                    <p className='text-center text-xs text-gray-400'>Wait for the customer to pay before finishing</p>
                 </div>
             )}
         </div>

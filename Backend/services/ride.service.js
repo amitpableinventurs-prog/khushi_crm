@@ -18,9 +18,12 @@ async function getFare(pickup, destination) {
     const km = distanceTime.distance.value / 1000;
     const minutes = distanceTime.duration.value / 60;
 
-    const fare = Object.fromEntries(Object.entries(rates).map(([ type, rate ]) => (
-        [ type, Math.round(rate.baseFare + (km * rate.perKm) + (minutes * rate.perMinute)) ]
-    )));
+    const fare = Object.fromEntries(settingService.VEHICLE_TYPES.map((type) => {
+        const rate = rates[ type ];
+        return [ type, Math.round(rate.baseFare + (km * rate.perKm) + (minutes * rate.perMinute)) ];
+    }));
+    // Per loading helper, added on top of the vehicle fare when the customer asks for helpers
+    fare.helperCharge = rates.helperCharge;
 
     return fare;
 
@@ -40,7 +43,8 @@ function getOtp(num) {
 
 
 module.exports.createRide = async ({
-    user, pickup, destination, vehicleType
+    user, pickup, destination, vehicleType,
+    goodsType, goodsWeight, receiverName, receiverPhone, helpers = 0, notes
 }) => {
     if (!user || !pickup || !destination || !vehicleType) {
         throw new Error('All fields are required');
@@ -48,14 +52,23 @@ module.exports.createRide = async ({
 
     const distanceTime = await mapService.getDistanceTime(pickup, destination);
     const fare = await getFare(pickup, destination);
+    const helperCount = Number(helpers) || 0;
+    const helperCharge = helperCount * fare.helperCharge;
 
     const ride = rideModel.create({
         user,
         pickup,
         destination,
         otp: getOtp(6),
-        fare: fare[ vehicleType ],
+        fare: fare[ vehicleType ] + helperCharge,
         vehicleType,
+        goodsType,
+        goodsWeight: goodsWeight ? Number(goodsWeight) : undefined,
+        receiverName,
+        receiverPhone,
+        helpers: helperCount,
+        helperCharge,
+        notes: notes || undefined,
         distance: distanceTime?.distance?.value || 5400,
         duration: distanceTime?.duration?.value || 900
     })

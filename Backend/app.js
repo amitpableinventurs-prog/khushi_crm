@@ -11,6 +11,7 @@ const rideRoutes = require('./routes/ride.routes');
 const adminRoutes = require('./routes/admin.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const vendorRoutes = require('./routes/vendor.routes');
 const paymentController = require('./controllers/payment.controller');
 
 const app = express();
@@ -38,6 +39,7 @@ app.get('/', (req, res) => {
 
 app.use('/users', userRoutes);
 app.use('/captains', captainRoutes);
+app.use('/vendors', vendorRoutes);
 app.use('/maps', mapsRoutes);
 app.use('/rides', rideRoutes);
 app.use('/admin', adminRoutes);

@@ -1,4 +1,5 @@
 import React from 'react'
+import GoodsSummary from './GoodsSummary'
 
 const RidePopUp = (props) => {
     return (
@@ -12,7 +13,7 @@ const RidePopUp = (props) => {
 
             <div className='flex items-center gap-2 mb-4'>
                 <div className='h-2 w-2 bg-green-400 rounded-full animate-pulse'></div>
-                <h3 className='text-xl font-bold'>New Ride Request!</h3>
+                <h3 className='text-xl font-bold'>New Delivery Request!</h3>
             </div>
 
             {/* Rider info */}
@@ -21,15 +22,15 @@ const RidePopUp = (props) => {
                     <img
                         className='h-12 w-12 rounded-full object-cover border-2 border-yellow-400'
                         src='https://i.pinimg.com/236x/af/26/28/af26280b0ca305be47df0b799ed1b12b.jpg'
-                        alt='rider'
+                        alt='customer'
                     />
                     <div>
                         <h2 className='text-base font-bold capitalize'>
-                            {props.ride?.user?.fullname?.firstname || 'Rider'} {props.ride?.user?.fullname?.lastname || ''}
+                            {props.ride?.user?.fullname?.firstname || 'Customer'} {props.ride?.user?.fullname?.lastname || ''}
                         </h2>
                         <div className='flex items-center gap-1'>
                             <i className="ri-star-fill text-yellow-500 text-xs"></i>
-                            <span className='text-xs text-gray-600'>4.8 · Rider</span>
+                            <span className='text-xs text-gray-600'>4.8 · Customer</span>
                         </div>
                     </div>
                 </div>
@@ -57,7 +58,7 @@ const RidePopUp = (props) => {
                         <i className="ri-map-pin-fill text-red-500 text-[10px]"></i>
                     </div>
                     <div>
-                        <p className='text-xs text-gray-400'>Destination</p>
+                        <p className='text-xs text-gray-400'>Drop</p>
                         <p className='font-semibold text-gray-800 text-sm'>{props.ride?.destination}</p>
                     </div>
                 </div>
@@ -72,6 +73,8 @@ const RidePopUp = (props) => {
                 </div>
             </div>
 
+            <GoodsSummary ride={props.ride} className='mb-5 -mt-2' />
+
             <button
                 onClick={() => {
                     props.setConfirmRidePopupPanel(true)
@@ -79,7 +82,7 @@ const RidePopUp = (props) => {
                 }}
                 className='bg-green-500 hover:bg-green-600 w-full text-white font-bold p-4 rounded-2xl flex items-center justify-center gap-2 transition-colors mb-2'
             >
-                <i className="ri-check-fill text-xl"></i> Accept Ride
+                <i className="ri-check-fill text-xl"></i> Accept Delivery
             </button>
             <button
                 onClick={() => props.setRidePopupPanel(false)}

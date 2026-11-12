@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { downloadFile, errorMessage, useAdminData } from '../api'
 import { useFilters } from '../useFilters'
-import { dayKey, formatDateTime, formatDistance, formatMoney, formatName, RIDE_STATUSES, VEHICLE_LABELS } from '../format'
+import { dayKey, formatDateTime, formatDistance, formatMoney, formatName, RIDE_STATUSES, VEHICLE_LABELS, VEHICLES, goodsLine } from '../format'
 import { Button, Card, ErrorBanner, Input, PageHeader, Pagination, PaymentBadge, PersonCell, RouteCell, Select, Spinner, StatusBadge, Table, Td } from '../ui'
 
 const DEFAULTS = { search: '', status: '', vehicleType: '', payment: '', from: '', to: '' }
@@ -31,7 +31,7 @@ const Rides = () => {
     setExportError('')
     setIsExporting(true)
     try {
-      await downloadFile('/rides/export', apiFilters, `rides-${dayKey()}.csv`)
+      await downloadFile('/rides/export', apiFilters, `orders-${dayKey()}.csv`)
     } catch (err) {
       setExportError(errorMessage(err, 'Export failed. Please try again.'))
     } finally {
@@ -44,8 +44,8 @@ const Rides = () => {
   return (
     <div>
       <PageHeader
-        title='Rides'
-        subtitle='Every ride request, newest first'
+        title='Orders'
+        subtitle='Every order request, newest first'
         actions={<Button icon='ri-download-2-line' onClick={exportCsv} disabled={isExporting}>{isExporting ? 'Exporting…' : 'Export CSV'}</Button>}
       />
       <ErrorBanner>{error || exportError}</ErrorBanner>
@@ -54,7 +54,7 @@ const Rides = () => {
         onSubmit={e => { e.preventDefault(); setFilter('search', search.trim()) }}
         className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_auto] gap-3 items-end mb-4'
       >
-        <Input label='Search' placeholder='Place, rider, captain or plate' value={search} onChange={e => setSearch(e.target.value)} type='search' />
+        <Input label='Search' placeholder='Place, customer, driver, receiver or plate' value={search} onChange={e => setSearch(e.target.value)} type='search' />
         <Select
           label='Status'
           value={filters.status}
@@ -65,7 +65,7 @@ const Rides = () => {
           label='Vehicle'
           value={filters.vehicleType}
           onChange={e => setFilter('vehicleType', e.target.value)}
-          options={[ { value: '', label: 'All vehicles' }, ...[ 'car', 'auto', 'moto' ].map(v => ({ value: v, label: VEHICLE_LABELS[ v ] })) ]}
+          options={[ { value: '', label: 'All vehicles' }, ...VEHICLES.map(v => ({ value: v.key, label: v.label })) ]}
         />
         <Select
           label='Payment'
@@ -97,18 +97,21 @@ const Rides = () => {
         {!data ? <Spinner /> : (
           <>
             <Table
-              columns={[ 'Requested', 'Rider', 'Captain', 'Route', 'Vehicle', 'Distance', 'Fare', 'Payment', 'Status' ]}
+              columns={[ 'Requested', 'Customer', 'Driver', 'Route', 'Vehicle & goods', 'Distance', 'Fare', 'Payment', 'Status' ]}
               items={data.items}
-              empty={hasFilters ? 'No rides match these filters.' : 'No rides yet.'}
+              empty={hasFilters ? 'No orders match these filters.' : 'No orders yet.'}
               onRowClick={r => navigate(`/admin/rides/${r._id}`)}
-              minWidth={1060}
+              minWidth={1160}
               renderCells={r => (
                 <>
                   <Td className='whitespace-nowrap text-[#c3c2b7]'>{formatDateTime(r.createdAt)}</Td>
-                  <Td>{r.user ? <PersonCell name={formatName(r.user.fullname)} sub={r.user.email} to={`/admin/riders/${r.user._id}`} /> : <span className='text-[#898781]'>Deleted rider</span>}</Td>
+                  <Td>{r.user ? <PersonCell name={formatName(r.user.fullname)} sub={r.user.email} to={`/admin/riders/${r.user._id}`} /> : <span className='text-[#898781]'>Deleted customer</span>}</Td>
                   <Td>{r.captain ? <PersonCell name={formatName(r.captain.fullname)} sub={r.captain.vehicle?.plate} to={`/admin/captains/${r.captain._id}`} /> : <span className='text-[#898781]'>—</span>}</Td>
                   <Td><RouteCell pickup={r.pickup} destination={r.destination} /></Td>
-                  <Td>{VEHICLE_LABELS[ r.vehicleType ] || '—'}</Td>
+                  <Td>
+                    <p className='whitespace-nowrap'>{VEHICLE_LABELS[ r.vehicleType ] || '—'}</p>
+                    {goodsLine(r) && <p className='text-xs text-[#898781]'>{goodsLine(r)}</p>}
+                  </Td>
                   <Td className='whitespace-nowrap tabular-nums'>{formatDistance(r.distance)}</Td>
                   <Td className='font-medium whitespace-nowrap tabular-nums'>{formatMoney(r.fare)}</Td>
                   <Td><PaymentBadge ride={r} /></Td>

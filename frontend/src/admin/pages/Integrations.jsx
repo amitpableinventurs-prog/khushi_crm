@@ -42,7 +42,7 @@ const INTEGRATIONS = {
   smtp: {
     title: 'Email (SMTP)',
     icon: 'ri-mail-send-line',
-    about: 'Sends password-reset OTP emails to riders and captains. When off, OTPs are only printed in the backend console.',
+    about: 'Sends password-reset OTP emails to customers and drivers. When off, OTPs are only printed in the backend console.',
     help: (
       <>
         For Gmail, turn on 2-step verification and create an <a className='underline' href='https://myaccount.google.com/apppasswords' target='_blank' rel='noreferrer'>app password</a> —
@@ -61,7 +61,7 @@ const INTEGRATIONS = {
   razorpay: {
     title: 'Razorpay payments',
     icon: 'ri-secure-payment-line',
-    about: 'Lets riders pay online with UPI, cards, netbanking and wallets at the end of the ride. Refunds can be issued from the ride page.',
+    about: 'Lets customers pay online with UPI, cards, netbanking and wallets when the delivery is done. Refunds can be issued from the order page.',
     help: (
       <>
         Get keys from <a className='underline' href='https://dashboard.razorpay.com/app/website-app-settings/api-keys' target='_blank' rel='noreferrer'>Razorpay Dashboard → API Keys</a>.
@@ -79,7 +79,7 @@ const INTEGRATIONS = {
   twilio: {
     title: 'Twilio SMS & WhatsApp',
     icon: 'ri-message-3-line',
-    about: 'Ride updates by SMS and WhatsApp (captain on the way with OTP, cancellations…). Choose which updates in Notifications. The switch on the right turns on SMS.',
+    about: 'Order updates by SMS and WhatsApp (driver on the way with OTP, cancellations…). Choose which updates in Notifications. The switch on the right turns on SMS.',
     help: (
       <>
         Find the Account SID and Auth Token on the <a className='underline' href='https://console.twilio.com/' target='_blank' rel='noreferrer'>Twilio Console</a> home page.
@@ -101,7 +101,7 @@ const INTEGRATIONS = {
   firebase: {
     title: 'Browser push (Firebase)',
     icon: 'ri-notification-3-line',
-    about: 'Pop-up notifications on riders’ and captains’ devices, even when the site is closed. They turn it on with the bell button in the app.',
+    about: 'Pop-up notifications on customers’ and drivers’ devices, even when the site is closed. They turn it on with the bell button in the app.',
     help: (
       <>
         In the <a className='underline' href='https://console.firebase.google.com/' target='_blank' rel='noreferrer'>Firebase console</a>: Project settings → <b>Service accounts</b> → Generate new private key (paste the whole file).

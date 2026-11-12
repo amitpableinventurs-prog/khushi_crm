@@ -13,6 +13,10 @@ import CaptainProtectWrapper from './pages/CaptainProtectWrapper'
 import CaptainLogout from './pages/CaptainLogout'
 import Riding from './pages/Riding'
 import CaptainRiding from './pages/CaptainRiding'
+import VendorSignup from './pages/VendorSignup'
+import VendorLogin from './pages/VendorLogin'
+import VendorHome from './pages/VendorHome'
+import VendorProtectWrapper from './pages/VendorProtectWrapper'
 import Profile from './pages/Profile'
 import ForgotPassword from './pages/ForgotPassword'
 import AdminLogin from './admin/AdminLogin'
@@ -39,7 +43,7 @@ const AuthGuard = ({ children }) => {
   const token = localStorage.getItem('token')
   const role = localStorage.getItem('role')
   if (token) {
-    return <Navigate to={role === 'captain' ? '/captain-home' : '/home'} replace />
+    return <Navigate to={role === 'captain' ? '/captain-home' : role === 'vendor' ? '/vendor-home' : '/home'} replace />
   }
   return children
 }
@@ -48,7 +52,7 @@ const CaptainAuthGuard = ({ children }) => {
   const token = localStorage.getItem('token')
   const role = localStorage.getItem('role')
   if (token) {
-    return <Navigate to={role === 'captain' ? '/captain-home' : '/home'} replace />
+    return <Navigate to={role === 'captain' ? '/captain-home' : role === 'vendor' ? '/vendor-home' : '/home'} replace />
   }
   return children
 }
@@ -64,6 +68,13 @@ const App = () => {
         <Route path='/signup' element={<AuthGuard><UserSignup /></AuthGuard>} />
         <Route path='/captain-login' element={<CaptainAuthGuard><Captainlogin /></CaptainAuthGuard>} />
         <Route path='/captain-signup' element={<CaptainAuthGuard><CaptainSignup /></CaptainAuthGuard>} />
+        <Route path='/vendor-login' element={<AuthGuard><VendorLogin /></AuthGuard>} />
+        <Route path='/vendor-register' element={<AuthGuard><VendorSignup /></AuthGuard>} />
+        <Route path='/vendor-home' element={
+          <VendorProtectWrapper>
+            <VendorHome />
+          </VendorProtectWrapper>
+        } />
         <Route path='/forgot-password' element={<ForgotPassword />} />
 
         {/* Riding pages — protected with user & captain auth wrappers */}

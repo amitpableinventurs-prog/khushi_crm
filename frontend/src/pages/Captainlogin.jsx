@@ -49,8 +49,8 @@ const Captainlogin = () => {
             <span className='h-12 w-12 rounded-2xl bg-gradient-to-tr from-yellow-400 to-amber-500 inline-flex items-center justify-center mb-3 shadow-lg shadow-yellow-500/20'>
               <i className="ri-steering-2-fill text-2xl text-black"></i>
             </span>
-            <h2 className='text-3xl font-black tracking-tight'>Captain Sign In</h2>
-            <p className='text-gray-400 text-sm mt-1'>Log in to accept rides & earn.</p>
+            <h2 className='text-3xl font-black tracking-tight'>Driver Sign In</h2>
+            <p className='text-gray-400 text-sm mt-1'>Log in to accept deliveries & earn.</p>
           </div>
 
           <form onSubmit={submitHandler} className='space-y-5'>
@@ -62,7 +62,7 @@ const Captainlogin = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className='bg-white/10 border border-white/10 rounded-2xl px-4 py-3.5 w-full text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400 transition-colors'
                 type='email'
-                placeholder='captain@example.com'
+                placeholder='driver@example.com'
               />
             </div>
 
@@ -88,21 +88,24 @@ const Captainlogin = () => {
               disabled={isLoading}
               className='w-full bg-yellow-400 text-black font-bold py-4 rounded-2xl text-base hover:bg-yellow-300 transition-all duration-300 transform active:scale-98 shadow-xl shadow-yellow-500/20'
             >
-              {isLoading ? 'Signing in...' : 'Sign In as Captain'}
+              {isLoading ? 'Signing in...' : 'Sign In as Driver'}
             </button>
           </form>
 
           <div className='mt-6 text-center space-y-3 text-sm'>
             <p className='text-gray-400'>
-              Want to drive with RideX?{' '}
+              Want to drive with Khushi Transport?{' '}
               <Link to='/captain-signup' className='text-yellow-400 font-semibold hover:underline'>Register as Captain</Link>
+            </p>
+            <p className='text-gray-400'>
+              Managing a fleet? <Link to='/vendor-login' className='text-yellow-400 font-semibold hover:underline'>Vendor sign in</Link>
             </p>
             <div className='border-t border-white/10 pt-4'>
               <Link
                 to='/login'
                 className='inline-flex items-center gap-2 text-blue-400 text-xs font-semibold hover:text-blue-300 transition-colors'
               >
-                <i className="ri-user-3-fill"></i> Rider Sign In instead →
+                <i className="ri-user-3-fill"></i> Customer Sign In instead →
               </Link>
             </div>
           </div>

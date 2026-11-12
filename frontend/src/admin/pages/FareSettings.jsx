@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import adminApi, { errorMessage, useAdminData } from '../api'
-import { formatMoney, VEHICLE_LABELS } from '../format'
+import { formatCapacity, formatMoney, VEHICLES } from '../format'
 import { Button, Card, ErrorBanner, Input, PageHeader, Spinner, SuccessBanner } from '../ui'
 
-const TYPES = [ 'car', 'auto', 'moto' ]
 const FIELDS = [
   { key: 'baseFare', label: 'Base fare (₹)', step: '1' },
   { key: 'perKm', label: 'Per km (₹)', step: '0.5' },
@@ -36,7 +35,7 @@ const FareSettings = () => {
     try {
       const response = await adminApi.put('/settings/fares', form)
       setData(response.data)
-      setNotice('Fares saved. New bookings use these rates right away; existing rides keep their fare.')
+      setNotice('Fares saved. New bookings use these rates right away; existing orders keep their fare.')
     } catch (err) {
       setSaveError(errorMessage(err))
     } finally {
@@ -46,14 +45,14 @@ const FareSettings = () => {
 
   return (
     <div>
-      <PageHeader title='Fare settings' subtitle='Fare = base fare + (distance × per-km rate) + (time × per-minute rate), rounded to the nearest rupee' />
+      <PageHeader title='Fare settings' subtitle='Fare = base fare + (distance × per-km rate) + (time × per-minute rate), rounded to the nearest rupee. Loading helpers are added on top.' />
       <SuccessBanner>{notice}</SuccessBanner>
       <ErrorBanner>{saveError}</ErrorBanner>
 
       <form onSubmit={save}>
-        <div className='grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4'>
-          {TYPES.map(type => (
-            <Card key={type} title={VEHICLE_LABELS[ type ]}>
+        <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-4'>
+          {VEHICLES.map(({ key: type, label, capacityKg }) => (
+            <Card key={type} title={label} subtitle={`Carries up to ${formatCapacity(capacityKg)}`}>
               <div className='space-y-3'>
                 {FIELDS.map(f => (
                   <Input
@@ -74,9 +73,23 @@ const FareSettings = () => {
               </p>
             </Card>
           ))}
+          <Card title='Loading helpers' subtitle='Charged per helper the customer adds to an order'>
+            <Input
+              label='Charge per helper (₹)'
+              type='number'
+              min='0'
+              step='10'
+              required
+              value={form.helperCharge}
+              onChange={e => setForm({ ...form, helperCharge: e.target.value })}
+            />
+            <p className='text-sm text-[#c3c2b7] mt-4 pt-3 border-t border-white/10'>
+              2 helpers add <span className='font-semibold text-[#f0efec]'>{formatMoney(2 * (Number(form.helperCharge) || 0))}</span> to the fare
+            </p>
+          </Card>
         </div>
 
-        <Card title='Preview trip' subtitle='Change the sample trip to see what riders would pay'>
+        <Card title='Preview trip' subtitle='Change the sample trip to see what customers would pay'>
           <div className='flex flex-wrap items-end gap-3'>
             <Input label='Distance (km)' type='number' min='0' step='0.5' value={previewKm} onChange={e => setPreviewKm(Number(e.target.value) || 0)} className='w-36' />
             <Input label='Duration (min)' type='number' min='0' step='1' value={previewMin} onChange={e => setPreviewMin(Number(e.target.value) || 0)} className='w-36' />

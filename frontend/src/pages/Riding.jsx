@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { SocketContext } from '../context/SocketContext'
 import LiveTracking from '../components/LiveTracking'
 import axios from 'axios'
+import { goodsLine, vehicleLabel } from '../vehicles'
 
 const Riding = () => {
     const location = useLocation()
@@ -142,7 +143,7 @@ const Riding = () => {
                 <h2 className='text-2xl font-black text-gray-900 mb-1 text-center'>Payment Confirmed!</h2>
                 <p className='text-gray-500 text-sm text-center mb-1'>You paid <span className='font-bold text-gray-800'>₹{ride?.fare}</span> {paidMethod === 'online' ? 'online' : 'cash'}</p>
                 <p className='text-gray-400 text-xs text-center mb-6'>
-                    {paidMethod === 'online' ? `Payment ID ${paymentId} · your captain has been notified` : 'Waiting for captain to confirm receipt...'}
+                    {paidMethod === 'online' ? `Payment ID ${paymentId} · your driver has been notified` : 'Waiting for the driver to confirm receipt...'}
                 </p>
 
                 {/* Ride summary */}
@@ -161,7 +162,7 @@ const Riding = () => {
                             <i className="ri-map-pin-fill text-red-500 text-xs"></i>
                         </div>
                         <div className='flex-1 min-w-0'>
-                            <p className='text-xs text-gray-400'>Destination</p>
+                            <p className='text-xs text-gray-400'>Drop</p>
                             <p className='text-xs font-semibold text-gray-800 truncate'>{ride?.destination}</p>
                         </div>
                     </div>
@@ -173,7 +174,7 @@ const Riding = () => {
                         <i className="ri-user-3-fill text-gray-500 text-lg"></i>
                     </div>
                     <div>
-                        <p className='text-[10px] text-gray-400 uppercase font-semibold'>Your Captain</p>
+                        <p className='text-[10px] text-gray-400 uppercase font-semibold'>Your Driver</p>
                         <h4 className='font-bold text-sm capitalize text-gray-900'>{ride?.captain?.fullname?.firstname} {ride?.captain?.fullname?.lastname}</h4>
                         <p className='text-xs text-gray-500 uppercase tracking-wider'>{ride?.captain?.vehicle?.plate}</p>
                     </div>
@@ -216,7 +217,7 @@ const Riding = () => {
                 <div className='flex-1 overflow-y-auto p-5 space-y-4'>
                     {/* Fare summary */}
                     <div className='bg-white rounded-2xl p-5 shadow-sm border border-gray-100'>
-                        <h3 className='font-bold text-base mb-4 text-gray-800'>Ride Summary</h3>
+                        <h3 className='font-bold text-base mb-4 text-gray-800'>Delivery Summary</h3>
                         <div className='space-y-3 text-sm'>
                             <div className='flex justify-between text-gray-500'>
                                 <span>From</span>
@@ -226,6 +227,18 @@ const Riding = () => {
                                 <span>To</span>
                                 <span className='font-medium text-gray-800 text-right max-w-[200px] truncate'>{ride?.destination}</span>
                             </div>
+                            {goodsLine(ride) && (
+                                <div className='flex justify-between text-gray-500'>
+                                    <span>Goods</span>
+                                    <span className='font-medium text-gray-800 text-right max-w-[200px] truncate'>{goodsLine(ride)}</span>
+                                </div>
+                            )}
+                            {ride?.receiverName && (
+                                <div className='flex justify-between text-gray-500'>
+                                    <span>Receiver</span>
+                                    <span className='font-medium text-gray-800 text-right max-w-[200px] truncate'>{ride.receiverName}</span>
+                                </div>
+                            )}
                             <div className='border-t pt-3 flex justify-between font-bold text-base'>
                                 <span>Total Fare</span>
                                 <span className='text-green-600 text-xl'>₹{ride?.fare}</span>
@@ -240,7 +253,7 @@ const Riding = () => {
                         </div>
                         <div>
                             <h4 className='font-bold capitalize'>{ride?.captain?.fullname?.firstname}</h4>
-                            <p className='text-sm text-gray-400'>{ride?.captain?.vehicle?.vehicleType} · {ride?.captain?.vehicle?.plate}</p>
+                            <p className='text-sm text-gray-400'>{vehicleLabel(ride?.captain?.vehicle?.vehicleType)} · {ride?.captain?.vehicle?.plate}</p>
                         </div>
                     </div>
 
@@ -279,7 +292,7 @@ const Riding = () => {
                         {method === 'online' ? (isPaying ? 'Opening payment…' : `Pay ₹${ride?.fare} online`) : `Confirm Cash Payment — ₹${ride?.fare}`}
                     </button>
                     <p className='text-center text-xs text-gray-400 mt-3'>
-                        {method === 'online' ? 'You will pay securely on Razorpay. Your captain is told as soon as it goes through.' : 'By confirming, you agree the cash has been paid to the captain.'}
+                        {method === 'online' ? 'You will pay securely on Razorpay. Your driver is told as soon as it goes through.' : 'By confirming, you agree the cash has been paid to the captain.'}
                     </p>
                 </div>
             </div>
@@ -296,7 +309,7 @@ const Riding = () => {
                 {/* Status badge */}
                 <div className='absolute top-4 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur text-white px-5 py-2 rounded-full flex items-center gap-2 text-sm font-medium z-10'>
                     <span className='h-2 w-2 rounded-full bg-green-400 animate-pulse'></span>
-                    Ride in progress
+                    Delivery in progress
                 </div>
             </div>
 
@@ -307,10 +320,10 @@ const Riding = () => {
                 {/* Enjoy trip banner */}
                 <div className='bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-4 mb-4 flex items-center gap-3'>
                     <div className='h-10 w-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0'>
-                        <i className="ri-car-fill text-white text-xl"></i>
+                        <i className="ri-truck-fill text-white text-xl"></i>
                     </div>
                     <div>
-                        <p className='text-white font-bold'>Enjoy your trip!</p>
+                        <p className='text-white font-bold'>Your goods are on the way</p>
                         <p className='text-green-100 text-xs'>Heading to {ride?.destination?.split(',')[0]}</p>
                     </div>
                 </div>
@@ -323,7 +336,7 @@ const Riding = () => {
                         </div>
                         <div>
                             <h2 className='font-bold capitalize'>{ride?.captain?.fullname?.firstname}</h2>
-                            <p className='text-xs text-gray-500'>{ride?.captain?.vehicle?.vehicleType} · {ride?.captain?.vehicle?.color}</p>
+                            <p className='text-xs text-gray-500'>{vehicleLabel(ride?.captain?.vehicle?.vehicleType)} · {ride?.captain?.vehicle?.color}</p>
                             <div className='flex items-center gap-1 mt-0.5'>
                                 <i className="ri-star-fill text-yellow-400 text-xs"></i>
                                 <span className='text-xs text-gray-600 font-medium'>4.9</span>

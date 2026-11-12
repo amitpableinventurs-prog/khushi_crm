@@ -46,6 +46,8 @@ export const StatTile = ({ label, value, hint, icon }) => (
 
 const BADGE_STYLES = {
   pending: { cls: 'bg-yellow-500/15 text-yellow-200', icon: 'ri-time-line' },
+  verified: { cls: 'bg-emerald-500/15 text-emerald-200', icon: 'ri-shield-check-line', label: 'Verified' },
+  rejected: { cls: 'bg-red-500/15 text-red-200', icon: 'ri-close-circle-line', label: 'Rejected' },
   accepted: { cls: 'bg-sky-500/15 text-sky-200', icon: 'ri-user-follow-line' },
   ongoing: { cls: 'bg-indigo-500/15 text-indigo-200', icon: 'ri-steering-2-line' },
   completed: { cls: 'bg-emerald-500/15 text-emerald-200', icon: 'ri-checkbox-circle-line' },
@@ -53,7 +55,7 @@ const BADGE_STYLES = {
   active: { cls: 'bg-emerald-500/15 text-emerald-200', icon: 'ri-wifi-line', label: 'Online' },
   inactive: { cls: 'bg-white/10 text-[#c3c2b7]', icon: 'ri-wifi-off-line', label: 'Offline' },
   blocked: { cls: 'bg-red-500/15 text-red-200', icon: 'ri-forbid-line', label: 'Blocked' },
-  busy: { cls: 'bg-indigo-500/15 text-indigo-200', icon: 'ri-steering-2-line', label: 'On a ride' },
+  busy: { cls: 'bg-indigo-500/15 text-indigo-200', icon: 'ri-steering-2-line', label: 'On a delivery' },
 }
 
 // Status chips always pair the color with an icon and a word

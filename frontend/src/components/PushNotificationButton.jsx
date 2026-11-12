@@ -95,8 +95,8 @@ const PushNotificationButton = () => {
     }
 
     const title = {
-        idle: 'Turn on ride notifications',
-        on: 'Ride notifications are on — click to turn off',
+        idle: 'Turn on delivery notifications',
+        on: 'Delivery notifications are on — click to turn off',
         busy: 'Please wait…',
         blocked: 'Notifications are blocked. Allow them in your browser’s site settings.',
         error: message || 'Could not turn on notifications — try again',

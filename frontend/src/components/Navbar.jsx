@@ -7,13 +7,13 @@ const Navbar = ({ mode = 'user' }) => {
   return (
     <header className='w-full z-50 px-6 py-4 flex items-center justify-between bg-black/90 backdrop-blur-md border-b border-white/10'>
       <Link to='/' className='flex items-center gap-2'>
-        <span className='text-xl font-black tracking-tight text-white'>Ride<span className='text-blue-400'>X</span></span>
+        <span className='text-xl font-black tracking-tight text-white'>Khushi<span className='text-blue-400'> Transport</span></span>
       </Link>
 
       <nav className='hidden md:flex items-center gap-6 text-sm text-gray-300'>
         <Link to='/' className='hover:text-white transition-colors'>Home</Link>
-        <Link to='/signup' className='hover:text-white transition-colors'>Ride</Link>
-        <Link to='/captain-signup' className='hover:text-white transition-colors'>Drive</Link>
+        <Link to='/signup' className='hover:text-white transition-colors'>Send Goods</Link>
+        <Link to='/captain-signup' className='hover:text-white transition-colors'>Drive With Us</Link>
       </nav>
 
       <div className='flex items-center gap-3'>
@@ -21,7 +21,7 @@ const Navbar = ({ mode = 'user' }) => {
           to={location.pathname.includes('captain') ? '/login' : '/captain-login'}
           className='text-xs sm:text-sm font-medium text-gray-300 hover:text-white transition-colors border border-white/20 px-3 py-1.5 rounded-full bg-white/5'
         >
-          {location.pathname.includes('captain') ? 'Switch to Rider' : 'Switch to Captain'}
+          {location.pathname.includes('captain') ? 'Switch to Customer' : 'Switch to Driver'}
         </Link>
         {location.pathname !== '/login' && location.pathname !== '/captain-login' && (
           <Link

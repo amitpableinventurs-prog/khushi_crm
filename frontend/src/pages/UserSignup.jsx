@@ -50,7 +50,7 @@ const UserSignup = () => {
       <main className='flex-1 flex items-center justify-center p-6 my-8'>
         <div className='w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl'>
           <div className='text-center mb-6'>
-            <h2 className='text-3xl font-black tracking-tight'>Create Rider Account</h2>
+            <h2 className='text-3xl font-black tracking-tight'>Create Customer Account</h2>
             <p className='text-gray-400 text-sm mt-1'>Sign up to start riding across the city.</p>
           </div>
 
@@ -93,7 +93,7 @@ const UserSignup = () => {
             </div>
 
             <div>
-              <label className='block text-xs font-semibold text-gray-400 uppercase mb-1'>Mobile Number <span className='normal-case font-normal text-gray-500'>(optional, for ride SMS / WhatsApp)</span></label>
+              <label className='block text-xs font-semibold text-gray-400 uppercase mb-1'>Mobile Number <span className='normal-case font-normal text-gray-500'>(optional, for delivery SMS / WhatsApp)</span></label>
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}

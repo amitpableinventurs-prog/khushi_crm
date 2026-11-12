@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { VEHICLE_TYPES, MAX_HELPERS } = require('../config/vehicles');
 
 
 const rideSchema = new mongoose.Schema({
@@ -58,7 +59,38 @@ const rideSchema = new mongoose.Schema({
     },
     vehicleType: {
         type: String,
-        enum: [ 'auto', 'car', 'moto' ],
+        enum: VEHICLE_TYPES,
+    },
+    // What is being moved and who receives it at the drop location
+    goodsType: {
+        type: String,
+        trim: true,
+    },
+    goodsWeight: {
+        type: Number,
+        min: 0,
+    }, // in kg
+    receiverName: {
+        type: String,
+        trim: true,
+    },
+    receiverPhone: {
+        type: String,
+        trim: true,
+    },
+    helpers: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: MAX_HELPERS,
+    }, // loading helpers requested
+    helperCharge: {
+        type: Number,
+        default: 0,
+    }, // total helper amount already included in fare
+    notes: {
+        type: String,
+        trim: true,
     },
     cancelledBy: {
         type: String,

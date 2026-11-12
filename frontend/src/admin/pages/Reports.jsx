@@ -22,7 +22,7 @@ const Reports = () => {
   const [ exportError, setExportError ] = useState('')
 
   const exportSummary = () => {
-    const rows = [ [ 'Date', 'Rides requested', 'Rides completed', 'Revenue (INR)' ], ...data.daily.map(d => [ d.date, d.rides, d.completed, d.revenue ]) ]
+    const rows = [ [ 'Date', 'Orders requested', 'Orders completed', 'Revenue (INR)' ], ...data.daily.map(d => [ d.date, d.rides, d.completed, d.revenue ]) ]
     const blob = new Blob([ '﻿' + toCsv(rows) ], { type: 'text/csv;charset=utf-8' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
@@ -34,7 +34,7 @@ const Reports = () => {
   const exportRides = async () => {
     setExportError('')
     try {
-      await downloadFile('/rides/export', filters, `rides-${filters.from}-to-${filters.to}.csv`)
+      await downloadFile('/rides/export', filters, `orders-${filters.from}-to-${filters.to}.csv`)
     } catch (err) {
       setExportError(errorMessage(err, 'Export failed. Please try again.'))
     }
@@ -47,11 +47,11 @@ const Reports = () => {
     <div>
       <PageHeader
         title='Reports'
-        subtitle='Revenue, rides and top performers for any date range (up to one year)'
+        subtitle='Revenue, orders and top performers for any date range (up to one year)'
         actions={data && (
           <>
             <Button icon='ri-download-2-line' onClick={exportSummary}>Daily summary CSV</Button>
-            <Button icon='ri-download-2-line' onClick={exportRides}>All rides CSV</Button>
+            <Button icon='ri-download-2-line' onClick={exportRides}>All orders CSV</Button>
           </>
         )}
       />
@@ -84,12 +84,12 @@ const Reports = () => {
         <div className={isLoading ? 'opacity-70 transition-opacity' : 'transition-opacity'}>
           <div className='grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4'>
             <StatTile label='Revenue' value={formatMoney(s.revenue)} hint={`Avg fare ${formatMoney(s.averageFare)}`} />
-            <StatTile label='Completed rides' value={formatNumber(s.ridesCompleted)} hint={`${formatNumber(s.totalDistanceKm)} km driven`} />
-            <StatTile label='Ride requests' value={formatNumber(s.ridesRequested)} hint={`${s.ridesCancelled} cancelled`} />
+            <StatTile label='Completed orders' value={formatNumber(s.ridesCompleted)} hint={`${formatNumber(s.totalDistanceKm)} km driven`} />
+            <StatTile label='Order requests' value={formatNumber(s.ridesRequested)} hint={`${s.ridesCancelled} cancelled`} />
             <StatTile label='Completion rate' value={s.completionRate === null ? '—' : `${s.completionRate}%`} hint='Completed ÷ (completed + cancelled)' />
-            <StatTile label='New riders' value={formatNumber(s.newUsers)} />
-            <StatTile label='New captains' value={formatNumber(s.newCaptains)} />
-            <StatTile label='Cancelled by riders' value={formatNumber(data.cancellations.user || 0)} />
+            <StatTile label='New customers' value={formatNumber(s.newUsers)} />
+            <StatTile label='New drivers' value={formatNumber(s.newCaptains)} />
+            <StatTile label='Cancelled by customers' value={formatNumber(data.cancellations.user || 0)} />
             <StatTile label='Cancelled by admin' value={formatNumber(data.cancellations.admin || 0)} />
           </div>
 
@@ -101,9 +101,9 @@ const Reports = () => {
                 rows={daily.map(d => [ d.label, formatMoney(d.revenue) ])}
               />
             </Card>
-            <Card title='Ride requests per day' subtitle='All statuses'>
+            <Card title='Order requests per day' subtitle='All statuses'>
               <ChartTableToggle
-                chart={<ColumnChart data={daily.map(d => ({ ...d, value: d.rides }))} formatValue={v => `${v} request${v === 1 ? '' : 's'}`} ariaLabel='Ride requests per day' />}
+                chart={<ColumnChart data={daily.map(d => ({ ...d, value: d.rides }))} formatValue={v => `${v} request${v === 1 ? '' : 's'}`} ariaLabel='Order requests per day' />}
                 columns={[ 'Date', 'Requested', 'Completed' ]}
                 rows={daily.map(d => [ d.label, d.rides, d.completed ])}
               />
@@ -114,40 +114,40 @@ const Reports = () => {
             <Card title='Revenue by vehicle type'>
               {data.byVehicle.length
                 ? <BarList data={data.byVehicle.map(v => ({ key: v.vehicleType, label: VEHICLE_LABELS[ v.vehicleType ] || v.vehicleType, value: v.revenue, hint: plural(v.rides, "ride") }))} formatValue={formatMoney} />
-                : <p className='text-sm text-[#898781] py-6 text-center'>No completed rides in this range.</p>}
+                : <p className='text-sm text-[#898781] py-6 text-center'>No completed orders in this range.</p>}
             </Card>
-            <Card title='Rides by status' subtitle='Requested in this range'>
+            <Card title='Orders by status' subtitle='Requested in this range'>
               <BarList data={Object.entries(data.byStatus).map(([ status, count ]) => ({ key: status, label: status.charAt(0).toUpperCase() + status.slice(1), value: count }))} formatValue={formatNumber} />
             </Card>
           </div>
 
           <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-            <Card title='Top captains' subtitle='By earnings in this range' padded={false}>
+            <Card title='Top drivers' subtitle='By earnings in this range' padded={false}>
               <Table
-                columns={[ '#', 'Captain', 'Rides', 'Earnings' ]}
+                columns={[ '#', 'Driver', 'Orders', 'Earnings' ]}
                 items={data.topCaptains}
                 minWidth={360}
-                empty='No completed rides in this range.'
+                empty='No completed orders in this range.'
                 renderCells={c => (
                   <>
                     <Td className='text-[#898781] tabular-nums'>{data.topCaptains.indexOf(c) + 1}</Td>
-                    <Td>{c.captain ? <Link to={`/admin/captains/${c.captain._id}`} className='hover:underline'>{formatName(c.captain.fullname)}</Link> : 'Deleted captain'}</Td>
+                    <Td>{c.captain ? <Link to={`/admin/captains/${c.captain._id}`} className='hover:underline'>{formatName(c.captain.fullname)}</Link> : 'Deleted driver'}</Td>
                     <Td className='tabular-nums'>{c.rides}</Td>
                     <Td className='font-medium tabular-nums'>{formatMoney(c.revenue)}</Td>
                   </>
                 )}
               />
             </Card>
-            <Card title='Top riders' subtitle='By amount spent in this range' padded={false}>
+            <Card title='Top customers' subtitle='By amount spent in this range' padded={false}>
               <Table
-                columns={[ '#', 'Rider', 'Rides', 'Spent' ]}
+                columns={[ '#', 'Customer', 'Orders', 'Spent' ]}
                 items={data.topRiders}
                 minWidth={360}
-                empty='No completed rides in this range.'
+                empty='No completed orders in this range.'
                 renderCells={u => (
                   <>
                     <Td className='text-[#898781] tabular-nums'>{data.topRiders.indexOf(u) + 1}</Td>
-                    <Td>{u.user ? <Link to={`/admin/riders/${u.user._id}`} className='hover:underline'>{formatName(u.user.fullname)}</Link> : 'Deleted rider'}</Td>
+                    <Td>{u.user ? <Link to={`/admin/riders/${u.user._id}`} className='hover:underline'>{formatName(u.user.fullname)}</Link> : 'Deleted customer'}</Td>
                     <Td className='tabular-nums'>{u.rides}</Td>
                     <Td className='font-medium tabular-nums'>{formatMoney(u.spent)}</Td>
                   </>

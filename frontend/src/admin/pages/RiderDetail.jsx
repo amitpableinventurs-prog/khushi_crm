@@ -35,7 +35,7 @@ const EditRider = ({ rider, onClose, onSaved }) => {
 
   return (
     <Modal
-      title='Edit rider'
+      title='Edit customer'
       onClose={onClose}
       footer={(
         <>
@@ -62,7 +62,7 @@ const RiderDetail = () => {
   const [ editing, setEditing ] = useState(false)
   const [ notice, setNotice ] = useState('')
 
-  if (!data) return <><PageHeader title='Rider' back={{ to: '/admin/riders', label: 'Riders' }} /><ErrorBanner>{error}</ErrorBanner>{!error && <Spinner />}</>
+  if (!data) return <><PageHeader title='Customer' back={{ to: '/admin/riders', label: 'Customers' }} /><ErrorBanner>{error}</ErrorBanner>{!error && <Spinner />}</>
 
   const { stats } = data
   const merge = (updated, message) => { setData({ ...data, ...updated }); setNotice(message) }
@@ -72,20 +72,20 @@ const RiderDetail = () => {
       <PageHeader
         title={formatName(data.fullname)}
         subtitle={data.email}
-        back={{ to: '/admin/riders', label: 'Riders' }}
+        back={{ to: '/admin/riders', label: 'Customers' }}
         actions={(
           <>
             {data.isBlocked && <StatusBadge status='blocked' />}
             <Button icon='ri-edit-line' onClick={() => setEditing(true)}>Edit</Button>
-            <AccountActions kind='users' noun='Rider' person={data} onChange={merge} listPath='/admin/riders' />
+            <AccountActions kind='users' noun='Customer' person={data} onChange={merge} listPath='/admin/riders' />
           </>
         )}
       />
       <SuccessBanner>{notice}</SuccessBanner>
 
       <div className='grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4'>
-        <StatTile label='Total spent' value={formatMoney(stats.totalFare)} hint={`${plural(stats.completedRides, "completed ride")}`} />
-        <StatTile label='Rides booked' value={stats.totalRides} />
+        <StatTile label='Total spent' value={formatMoney(stats.totalFare)} hint={`${plural(stats.completedRides, "completed order")}`} />
+        <StatTile label='Orders booked' value={stats.totalRides} />
         <StatTile label='Cancelled' value={stats.cancelledRides} />
         <StatTile label='Average fare' value={formatMoney(stats.completedRides ? stats.totalFare / stats.completedRides : 0)} />
       </div>
@@ -96,17 +96,17 @@ const RiderDetail = () => {
           [ 'Email', data.email ],
           [ 'Phone', data.phone || 'Not added' ],
           [ 'Joined', formatDate(data.createdAt) ],
-          [ 'Last ride', stats.lastRideAt ? formatDateTime(stats.lastRideAt) : 'No rides yet' ],
+          [ 'Last order', stats.lastRideAt ? formatDateTime(stats.lastRideAt) : 'No orders yet' ],
           [ 'Account', data.isBlocked ? 'Blocked' : 'Allowed' ],
         ]} />
       </Card>
 
-      <Card title='Recent rides' subtitle='Last 20 rides booked by this rider' padded={false}
-        actions={<button onClick={() => navigate(`/admin/rides?search=${encodeURIComponent(data.email)}`)} className='text-sm text-[#c3c2b7] hover:text-white'>All rides →</button>}>
+      <Card title='Recent orders' subtitle='Last 20 orders booked by this customer' padded={false}
+        actions={<button onClick={() => navigate(`/admin/rides?search=${encodeURIComponent(data.email)}`)} className='text-sm text-[#c3c2b7] hover:text-white'>All orders →</button>}>
         <Table
-          columns={[ 'Requested', 'Captain', 'Route', 'Fare', 'Status' ]}
+          columns={[ 'Requested', 'Driver', 'Route', 'Fare', 'Status' ]}
           items={data.recentRides}
-          empty='This rider has not booked any rides yet.'
+          empty='This customer has not booked any orders yet.'
           onRowClick={r => navigate(`/admin/rides/${r._id}`)}
           renderCells={r => (
             <>
@@ -120,7 +120,7 @@ const RiderDetail = () => {
         />
       </Card>
 
-      {editing && <EditRider rider={data} onClose={() => setEditing(false)} onSaved={(u) => { setEditing(false); merge(u, 'Rider details saved.') }} />}
+      {editing && <EditRider rider={data} onClose={() => setEditing(false)} onSaved={(u) => { setEditing(false); merge(u, 'Customer details saved.') }} />}
     </div>
   )
 }

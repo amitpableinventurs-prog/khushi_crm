@@ -1,3 +1,4 @@
+import { vehicleLabel, formatCapacity } from '../vehicles'
 import React, { useContext, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { UserDataContext } from '../context/UserContext'
@@ -46,7 +47,7 @@ const Profile = () => {
           </button>
           <h1 className='text-lg font-bold text-gray-900'>My Profile</h1>
           <span className={`ml-auto text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${isCaptain ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>
-            {isCaptain ? 'Captain' : 'Rider'}
+            {isCaptain ? 'Driver' : 'Customer'}
           </span>
         </div>
       </header>
@@ -130,9 +131,9 @@ const Profile = () => {
             <div className='grid grid-cols-2 gap-3'>
               {[
                 { label: 'Plate Number', value: captain.vehicle.plate?.toUpperCase() },
-                { label: 'Vehicle Type', value: captain.vehicle.vehicleType },
+                { label: 'Vehicle Type', value: vehicleLabel(captain.vehicle.vehicleType) },
                 { label: 'Color', value: captain.vehicle.color },
-                { label: 'Capacity', value: `${captain.vehicle.capacity} seats` },
+                { label: 'Load Capacity', value: formatCapacity(captain.vehicle.capacity) },
               ].map((item, i) => (
                 <div key={i} className='bg-gray-50 rounded-xl p-3'>
                   <p className='text-xs text-gray-400 mb-0.5'>{item.label}</p>

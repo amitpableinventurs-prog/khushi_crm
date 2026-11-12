@@ -34,7 +34,7 @@ const Rules = ({ data, onSaved }) => {
     try {
       const response = await adminApi.put('/notifications/rules', { rules })
       onSaved(response.data.rules)
-      setMessage({ ok: 'Saved. New ride events use these rules within 30 seconds.' })
+      setMessage({ ok: 'Saved. New order events use these rules within 30 seconds.' })
     } catch (err) {
       setMessage({ error: errorMessage(err) })
     } finally {
@@ -42,7 +42,7 @@ const Rules = ({ data, onSaved }) => {
     }
   }
 
-  const groups = [ [ 'rider', 'Riders get' ], [ 'captain', 'Captains get' ] ]
+  const groups = [ [ 'rider', 'Customers get' ], [ 'captain', 'Drivers get' ] ]
 
   return (
     <Card
@@ -112,7 +112,7 @@ const TestSend = ({ channels }) => {
     email: 'name@example.com',
     sms: '+91 98765 43210',
     whatsapp: '+91 98765 43210',
-    push: 'Email of a rider or captain who turned on notifications',
+    push: 'Email of an orderr or driver who turned on notifications',
   }[ channel ]
 
   const send = async (e) => {
@@ -174,13 +174,13 @@ const Log = ({ events }) => {
             columns={[ 'Time', 'Update', 'Channel', 'Recipient', 'Result', 'Details' ]}
             items={data.items}
             minWidth={820}
-            empty='Nothing sent yet. Messages appear here as rides happen.'
+            empty='Nothing sent yet. Messages appear here as orders happen.'
             renderCells={l => (
               <>
                 <Td className='whitespace-nowrap text-[#c3c2b7]'>{formatDateTime(l.createdAt)}</Td>
                 <Td>
                   {l.event === 'test' ? 'Test message' : eventLabel[ l.event ] || l.event}
-                  {l.ride && <Link to={`/admin/rides/${l.ride}`} className='block text-xs text-[#898781] hover:underline'>View ride</Link>}
+                  {l.ride && <Link to={`/admin/rides/${l.ride}`} className='block text-xs text-[#898781] hover:underline'>View order</Link>}
                 </Td>
                 <Td className='capitalize whitespace-nowrap'>{CHANNELS.find(c => c.key === l.channel)?.label}</Td>
                 <Td>
@@ -210,7 +210,7 @@ const Notifications = () => {
 
   return (
     <div>
-      <PageHeader title='Notifications' subtitle='Ride updates sent to riders and captains by email, SMS, WhatsApp and push' />
+      <PageHeader title='Notifications' subtitle='Order updates sent to customers and drivers by email, SMS, WhatsApp and push' />
 
       <div className='grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4'>
         {CHANNELS.map(c => {

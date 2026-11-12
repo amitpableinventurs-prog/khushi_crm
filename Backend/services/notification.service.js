@@ -7,6 +7,7 @@ const integrationService = require('./integration.service');
 const emailService = require('./email.service');
 const twilioService = require('./twilio.service');
 const fcmService = require('./fcm.service');
+const { vehicleLabel } = require('../config/vehicles');
 
 // Ride notifications over email, SMS, WhatsApp and browser push.
 // Which channels fire for which event is set in Admin > Notifications.
@@ -18,60 +19,61 @@ const name = (person) => person?.fullname?.firstname || 'there';
 const fullName = (person) => [ person?.fullname?.firstname, person?.fullname?.lastname ].filter(Boolean).join(' ');
 const money = (v) => `₹${Math.round(Number(v) || 0).toLocaleString('en-IN')}`;
 const short = (place) => String(place || '').split(',')[ 0 ];
-const vehicle = (captain) => [ captain?.vehicle?.color, captain?.vehicle?.vehicleType ].filter(Boolean).join(' ');
-const tripRows = (ride) => [ [ 'From', ride.pickup ], [ 'To', ride.destination ], [ 'Fare', money(ride.fare) ] ];
+const vehicle = (captain) => [ captain?.vehicle?.color, vehicleLabel(captain?.vehicle?.vehicleType) ].filter(Boolean).join(' ');
+const goods = (ride) => [ ride.goodsType, ride.goodsWeight ? `${ride.goodsWeight} kg` : '', ride.helpers ? `${ride.helpers} helper${ride.helpers > 1 ? 's' : ''}` : '' ].filter(Boolean).join(' · ');
+const tripRows = (ride) => [ [ 'From', ride.pickup ], [ 'To', ride.destination ], ...(goods(ride) ? [ [ 'Goods', goods(ride) ] ] : []), [ 'Fare', money(ride.fare) ] ];
 
 const EVENTS = {
     'rider.ride_accepted': {
         audience: 'rider',
-        label: 'Captain accepted the ride',
-        description: 'Captain name, vehicle and the OTP to start the ride',
+        label: 'Driver accepted the delivery',
+        description: 'Driver name, vehicle and the OTP to start the delivery',
         defaults: { email: true, sms: true, whatsapp: false, push: true },
         build: ({ ride, brand }) => {
-            const text = `${brand}: ${fullName(ride.captain)} (${vehicle(ride.captain)}, ${ride.captain?.vehicle?.plate}) is coming to pick you up. Share OTP ${ride.otp} with your captain to start the ride.`;
+            const text = `${brand}: ${fullName(ride.captain)} (${vehicle(ride.captain)}, ${ride.captain?.vehicle?.plate}) is coming to pick up your goods. Share OTP ${ride.otp} with your driver to start the delivery.`;
             return {
-                title: 'Your captain is on the way',
+                title: 'Your driver is on the way',
                 text,
                 link: '/home',
                 email: {
-                    subject: 'Your captain is on the way',
-                    lines: [ `Hi ${name(ride.user)}, ${fullName(ride.captain)} has accepted your ride.`, `Share this OTP with your captain to start the ride: ${ride.otp}` ],
-                    rows: [ [ 'Captain', fullName(ride.captain) ], [ 'Vehicle', `${vehicle(ride.captain)} · ${ride.captain?.vehicle?.plate}` ], [ 'OTP', ride.otp ], ...tripRows(ride) ],
+                    subject: 'Your driver is on the way',
+                    lines: [ `Hi ${name(ride.user)}, ${fullName(ride.captain)} has accepted your delivery.`, `Share this OTP with your driver to start the delivery: ${ride.otp}` ],
+                    rows: [ [ 'Driver', fullName(ride.captain) ], [ 'Vehicle', `${vehicle(ride.captain)} · ${ride.captain?.vehicle?.plate}` ], [ 'OTP', ride.otp ], ...tripRows(ride) ],
                 },
             };
         },
     },
     'rider.ride_started': {
         audience: 'rider',
-        label: 'Ride started',
-        description: 'Sent when the captain enters the OTP',
+        label: 'Delivery started',
+        description: 'Sent when the driver enters the OTP',
         defaults: { email: false, sms: false, whatsapp: false, push: true },
         build: ({ ride, brand }) => ({
-            title: 'Ride started',
-            text: `${brand}: Your ride to ${short(ride.destination)} has started. Have a safe trip!`,
+            title: 'Delivery started',
+            text: `${brand}: Your delivery to ${short(ride.destination)} has started. Your goods are on the way.`,
             link: '/riding',
-            email: { subject: 'Your ride has started', lines: [ `Hi ${name(ride.user)}, your ride to ${ride.destination} has started. Have a safe trip!` ], rows: tripRows(ride) },
+            email: { subject: 'Your delivery has started', lines: [ `Hi ${name(ride.user)}, your delivery to ${ride.destination} has started. Your goods are on the way.` ], rows: tripRows(ride) },
         }),
     },
     'rider.ride_completed': {
         audience: 'rider',
-        label: 'Ride completed (receipt)',
+        label: 'Delivery completed (receipt)',
         description: 'Fare, payment method and trip details',
         defaults: { email: true, sms: false, whatsapp: false, push: true },
         build: ({ ride, brand }) => {
             const method = ride.paymentMethod === 'online' ? 'paid online' : 'paid in cash';
             return {
-                title: `Ride completed · ${money(ride.fare)}`,
-                text: `${brand}: Your ride to ${short(ride.destination)} is complete. Fare ${money(ride.fare)} (${method}). Thank you for riding with us!`,
+                title: `Delivery completed · ${money(ride.fare)}`,
+                text: `${brand}: Your delivery to ${short(ride.destination)} is complete. Fare ${money(ride.fare)} (${method}). Thank you for choosing us!`,
                 link: '/home',
                 email: {
-                    subject: `Receipt for your ride · ${money(ride.fare)}`,
-                    heading: 'Thanks for riding with us',
-                    lines: [ `Hi ${name(ride.user)}, here is the receipt for your ride.` ],
+                    subject: `Receipt for your delivery · ${money(ride.fare)}`,
+                    heading: 'Thanks for choosing us',
+                    lines: [ `Hi ${name(ride.user)}, here is the receipt for your delivery.` ],
                     rows: [
                         ...tripRows(ride),
                         [ 'Payment', ride.paymentMethod === 'online' ? `Online${ride.paymentID ? ` (${ride.paymentID})` : ''}` : 'Cash' ],
-                        [ 'Captain', `${fullName(ride.captain)} · ${ride.captain?.vehicle?.plate || ''}` ],
+                        [ 'Driver', `${fullName(ride.captain)} · ${ride.captain?.vehicle?.plate || ''}` ],
                         [ 'Distance', ride.distance ? `${(ride.distance / 1000).toFixed(1)} km` : '—' ],
                         [ 'Date', new Date(ride.completedAt || Date.now()).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) ],
                     ],
@@ -81,74 +83,74 @@ const EVENTS = {
     },
     'rider.ride_cancelled_by_admin': {
         audience: 'rider',
-        label: 'Ride cancelled by admin',
+        label: 'Delivery cancelled by admin',
         description: 'Includes the reason the admin entered',
         defaults: { email: true, sms: true, whatsapp: false, push: true },
         build: ({ ride, brand }) => ({
-            title: 'Your ride was cancelled',
-            text: `${brand}: Your ride from ${short(ride.pickup)} was cancelled by our support team. Reason: ${ride.cancelReason || 'not given'}.`,
+            title: 'Your delivery was cancelled',
+            text: `${brand}: Your delivery from ${short(ride.pickup)} was cancelled by our support team. Reason: ${ride.cancelReason || 'not given'}.`,
             link: '/home',
-            email: { subject: 'Your ride was cancelled', lines: [ `Hi ${name(ride.user)}, our support team cancelled your ride.`, `Reason: ${ride.cancelReason || 'not given'}` ], rows: tripRows(ride) },
+            email: { subject: 'Your delivery was cancelled', lines: [ `Hi ${name(ride.user)}, our support team cancelled your delivery.`, `Reason: ${ride.cancelReason || 'not given'}` ], rows: tripRows(ride) },
         }),
     },
     'captain.new_ride_request': {
         audience: 'captain',
-        label: 'New ride request nearby',
-        description: 'Sent to every available captain the request is offered to',
+        label: 'New delivery request nearby',
+        description: 'Sent to every available driver the request is offered to',
         defaults: { email: false, sms: false, whatsapp: false, push: true },
         build: ({ ride, brand }) => ({
-            title: `New ride request · ${money(ride.fare)}`,
-            text: `${brand}: New ride ${money(ride.fare)} from ${short(ride.pickup)} to ${short(ride.destination)}. Open the app to accept.`,
+            title: `New delivery request · ${money(ride.fare)}`,
+            text: `${brand}: New delivery ${money(ride.fare)} from ${short(ride.pickup)} to ${short(ride.destination)}. Open the app to accept.`,
             link: '/captain-home',
-            email: { subject: `New ride request · ${money(ride.fare)}`, lines: [ 'A new ride is waiting for a captain. Open the app to accept it.' ], rows: tripRows(ride) },
+            email: { subject: `New delivery request · ${money(ride.fare)}`, lines: [ 'A new delivery is waiting for a driver. Open the app to accept it.' ], rows: tripRows(ride) },
         }),
     },
     'captain.ride_cancelled_by_rider': {
         audience: 'captain',
-        label: 'Rider cancelled the ride',
-        description: 'Sent to the captain who accepted it',
+        label: 'Customer cancelled the delivery',
+        description: 'Sent to the driver who accepted it',
         defaults: { email: false, sms: true, whatsapp: false, push: true },
         build: ({ ride, brand }) => ({
-            title: 'Ride cancelled by rider',
-            text: `${brand}: The rider cancelled the ride from ${short(ride.pickup)}. You are free for new rides.`,
+            title: 'Delivery cancelled by customer',
+            text: `${brand}: The customer cancelled the delivery from ${short(ride.pickup)}. You are free for new deliveries.`,
             link: '/captain-home',
-            email: { subject: 'Ride cancelled by rider', lines: [ 'The rider cancelled this ride. You are free for new rides.' ], rows: tripRows(ride) },
+            email: { subject: 'Delivery cancelled by customer', lines: [ 'The customer cancelled this delivery. You are free for new deliveries.' ], rows: tripRows(ride) },
         }),
     },
     'captain.ride_cancelled_by_admin': {
         audience: 'captain',
-        label: 'Ride cancelled by admin',
+        label: 'Delivery cancelled by admin',
         description: 'Includes the reason the admin entered',
         defaults: { email: false, sms: true, whatsapp: false, push: true },
         build: ({ ride, brand }) => ({
-            title: 'Ride cancelled by admin',
-            text: `${brand}: The ride from ${short(ride.pickup)} was cancelled by our support team. Reason: ${ride.cancelReason || 'not given'}.`,
+            title: 'Delivery cancelled by admin',
+            text: `${brand}: The delivery from ${short(ride.pickup)} was cancelled by our support team. Reason: ${ride.cancelReason || 'not given'}.`,
             link: '/captain-home',
-            email: { subject: 'Ride cancelled by admin', lines: [ `Reason: ${ride.cancelReason || 'not given'}` ], rows: tripRows(ride) },
+            email: { subject: 'Delivery cancelled by admin', lines: [ `Reason: ${ride.cancelReason || 'not given'}` ], rows: tripRows(ride) },
         }),
     },
     'captain.payment_received': {
         audience: 'captain',
-        label: 'Rider paid online',
-        description: 'Confirms the online payment so the captain can finish the ride',
+        label: 'Customer paid online',
+        description: 'Confirms the online payment so the driver can finish the delivery',
         defaults: { email: false, sms: false, whatsapp: false, push: true },
         build: ({ ride, brand }) => ({
             title: `Payment received · ${money(ride.fare)}`,
-            text: `${brand}: The rider paid ${money(ride.fare)} online. You can finish the ride.`,
+            text: `${brand}: The customer paid ${money(ride.fare)} online. You can finish the delivery.`,
             link: '/captain-riding',
-            email: { subject: `Payment received · ${money(ride.fare)}`, lines: [ 'The rider paid online. You can finish the ride.' ], rows: tripRows(ride) },
+            email: { subject: `Payment received · ${money(ride.fare)}`, lines: [ 'The customer paid online. You can finish the delivery.' ], rows: tripRows(ride) },
         }),
     },
     'captain.ride_completed': {
         audience: 'captain',
-        label: 'Ride completed (earnings)',
-        description: 'What the captain earned for the ride',
+        label: 'Delivery completed (earnings)',
+        description: 'What the driver earned for the delivery',
         defaults: { email: false, sms: false, whatsapp: false, push: true },
         build: ({ ride, brand }) => ({
-            title: `Ride completed · ${money(ride.fare)} earned`,
-            text: `${brand}: Ride to ${short(ride.destination)} completed. You earned ${money(ride.fare)} (${ride.paymentMethod === 'online' ? 'paid online' : 'cash'}).`,
+            title: `Delivery completed · ${money(ride.fare)} earned`,
+            text: `${brand}: Delivery to ${short(ride.destination)} completed. You earned ${money(ride.fare)} (${ride.paymentMethod === 'online' ? 'paid online' : 'cash'}).`,
             link: '/captain-home',
-            email: { subject: `You earned ${money(ride.fare)}`, lines: [ 'Ride completed. Great job!' ], rows: [ ...tripRows(ride), [ 'Payment', ride.paymentMethod === 'online' ? 'Online' : 'Cash' ] ] },
+            email: { subject: `You earned ${money(ride.fare)}`, lines: [ 'Delivery completed. Great job!' ], rows: [ ...tripRows(ride), [ 'Payment', ride.paymentMethod === 'online' ? 'Online' : 'Cash' ] ] },
         }),
     },
 };

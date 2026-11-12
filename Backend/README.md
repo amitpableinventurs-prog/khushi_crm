@@ -428,6 +428,33 @@ The request body should be in JSON format and include the following fields:
 }
 ```
 
+## Driver KYC
+
+`POST /captains/register` accepts `multipart/form-data` with the existing driver, vehicle, and account fields plus:
+
+- `license`: driving licence (PDF, JPG, or PNG; maximum 3 MB).
+- `identity`: government ID (PDF, JPG, or PNG; maximum 3 MB).
+
+New drivers remain pending until an admin reviews the documents. They can sign in to check their status, but ride actions are available only after approval. Rejected drivers can resubmit both documents using `POST /captains/kyc` with a captain bearer token.
+
+Admins can review a driver at `GET /admin/captains/:id`, open documents at `GET /admin/captains/:id/kyc/:document` (`license` or `identity`), and approve or reject with `PATCH /admin/captains/:id/kyc`:
+
+```json
+{ "status": "rejected", "reviewNote": "Please upload a clearer licence image." }
+```
+
+KYC document endpoints require an admin bearer token and do not cache document responses.
+
+## Vendor fleet registration
+
+- `POST /vendors/register`: register a vendor with `fullname`, `businessName`, `email`, `phone`, and an 8-character-minimum `password`.
+- `POST /vendors/login`: sign in and receive a vendor token.
+- `GET /vendors/profile`: retrieve the authenticated vendor and registered vehicles.
+- `POST /vendors/vehicles`: add a vehicle (`color`, `plate`, `capacity`, and `vehicleType`) using the vendor bearer token.
+- `GET /vendors/logout`: revoke the current vendor token.
+
+Vendor vehicle plates must be unique across registered vendor fleets.
+
 
 ## `/rides/get-fare` Endpoint
 

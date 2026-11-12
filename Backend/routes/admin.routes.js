@@ -69,9 +69,16 @@ router.post('/rides/:id/cancel', authAdmin, [ validId, body('reason').optional()
 router.get('/captains', authAdmin, [
     ...pageQuery,
     query('status').optional({ values: 'falsy' }).isIn([ 'active', 'inactive' ]).withMessage('Invalid status'),
-    query('vehicleType').optional({ values: 'falsy' }).isIn([ 'car', 'motorcycle', 'auto' ]).withMessage('Invalid vehicle type'),
+    query('kycStatus').optional({ values: 'falsy' }).isIn([ 'pending', 'verified', 'rejected' ]).withMessage('Invalid KYC status'),
+    query('vehicleType').optional({ values: 'falsy' }).isIn(VEHICLE_TYPES).withMessage('Invalid vehicle type'),
 ], adminController.listCaptains)
 router.get('/captains/:id', authAdmin, validId, adminController.getCaptain)
+router.get('/captains/:id/kyc/:document', authAdmin, validId, adminController.getCaptainKycDocument)
+router.patch('/captains/:id/kyc', authAdmin, [
+    validId,
+    body('status').isIn([ 'verified', 'rejected' ]).withMessage('Status must be verified or rejected'),
+    body('reviewNote').optional().isString().isLength({ max: 500 }).withMessage('Review note is too long'),
+], adminController.reviewCaptainKyc)
 router.patch('/captains/:id', authAdmin, [
     validId,
     nameBody('fullname.firstname'),
@@ -80,8 +87,8 @@ router.patch('/captains/:id', authAdmin, [
     body('status').optional().isIn([ 'active', 'inactive' ]).withMessage('Invalid status'),
     body('vehicle.color').optional().isLength({ min: 3 }).withMessage('Color must be at least 3 characters long'),
     body('vehicle.plate').optional().isLength({ min: 3 }).withMessage('Plate must be at least 3 characters long'),
-    body('vehicle.capacity').optional().isInt({ min: 1 }).withMessage('Capacity must be at least 1').toInt(),
-    body('vehicle.vehicleType').optional().isIn([ 'car', 'motorcycle', 'auto' ]).withMessage('Invalid vehicle type'),
+    body('vehicle.capacity').optional().isInt({ min: 1 }).withMessage('Load capacity must be at least 1 kg').toInt(),
+    body('vehicle.vehicleType').optional().isIn(VEHICLE_TYPES).withMessage('Invalid vehicle type'),
     phoneBody,
 ], adminController.updateCaptain)
 router.patch('/captains/:id/block', authAdmin, [ validId, blockBody ], adminController.setCaptainBlocked)
@@ -103,11 +110,14 @@ router.delete('/users/:id', authAdmin, validId, adminController.deleteUser)
 // Reports & settings
 router.get('/reports', authAdmin, dateQuery, adminController.getReport)
 router.get('/settings/fares', authAdmin, adminController.getFareSettings)
-router.put('/settings/fares', authAdmin, VEHICLE_TYPES.flatMap(type => [
-    body(`${type}.baseFare`).isFloat({ min: 0, max: 10000 }).withMessage(`${type}: base fare must be 0–10000`),
-    body(`${type}.perKm`).isFloat({ min: 0, max: 1000 }).withMessage(`${type}: per-km rate must be 0–1000`),
-    body(`${type}.perMinute`).isFloat({ min: 0, max: 1000 }).withMessage(`${type}: per-minute rate must be 0–1000`),
-]), adminController.updateFareSettings)
+router.put('/settings/fares', authAdmin, [
+    body('helperCharge').isFloat({ min: 0, max: 10000 }).withMessage('Helper charge must be 0–10000'),
+    ...VEHICLE_TYPES.flatMap(type => [
+        body(`${type}.baseFare`).isFloat({ min: 0, max: 10000 }).withMessage(`${type}: base fare must be 0–10000`),
+        body(`${type}.perKm`).isFloat({ min: 0, max: 1000 }).withMessage(`${type}: per-km rate must be 0–1000`),
+        body(`${type}.perMinute`).isFloat({ min: 0, max: 1000 }).withMessage(`${type}: per-minute rate must be 0–1000`),
+    ]),
+], adminController.updateFareSettings)
 
 // Third-party integrations (Google Maps, OpenStreetMap, SMTP email)
 const integrationName = param('name').isIn(NAMES).withMessage('Unknown integration');

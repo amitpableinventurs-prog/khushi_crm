@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import GoodsSummary from './GoodsSummary'
 
 const ConfirmRidePopUp = (props) => {
     const [otp, setOtp] = useState('')
@@ -41,7 +42,7 @@ const ConfirmRidePopUp = (props) => {
             >
                 <i className="text-3xl text-gray-300 ri-arrow-down-wide-line"></i>
             </h5>
-            <h3 className='text-2xl font-bold mb-4'>Confirm Ride to Start</h3>
+            <h3 className='text-2xl font-bold mb-4'>Load Goods & Start</h3>
 
             {/* Rider info */}
             <div className='flex items-center justify-between p-4 bg-yellow-50 border-2 border-yellow-400 rounded-2xl mb-4'>
@@ -49,13 +50,13 @@ const ConfirmRidePopUp = (props) => {
                     <img
                         className='h-12 w-12 rounded-full object-cover border-2 border-yellow-400'
                         src='https://i.pinimg.com/236x/af/26/28/af26280b0ca305be47df0b799ed1b12b.jpg'
-                        alt='rider'
+                        alt='customer'
                     />
                     <div>
-                        <h2 className='text-base font-bold capitalize'>{props.ride?.user?.fullname?.firstname || 'Rider'} {props.ride?.user?.fullname?.lastname || ''}</h2>
+                        <h2 className='text-base font-bold capitalize'>{props.ride?.user?.fullname?.firstname || 'Customer'} {props.ride?.user?.fullname?.lastname || ''}</h2>
                         <div className='flex items-center gap-1 text-yellow-500'>
                             <i className="ri-star-fill text-xs"></i>
-                            <span className='text-xs font-medium text-gray-700'>4.8 · Rider</span>
+                            <span className='text-xs font-medium text-gray-700'>4.8 · Customer</span>
                         </div>
                     </div>
                 </div>
@@ -83,7 +84,7 @@ const ConfirmRidePopUp = (props) => {
                         <i className="ri-map-pin-fill text-red-500 text-[10px]"></i>
                     </div>
                     <div>
-                        <p className='text-xs text-gray-400'>Destination</p>
+                        <p className='text-xs text-gray-400'>Drop</p>
                         <p className='font-semibold text-gray-800 text-sm'>{props.ride?.destination}</p>
                     </div>
                 </div>
@@ -98,12 +99,14 @@ const ConfirmRidePopUp = (props) => {
                 </div>
             </div>
 
+            <GoodsSummary ride={props.ride} showReceiverPhone className='mb-4' />
+
             {/* OTP Input */}
             <form onSubmit={submitHandler}>
                 <div className='mb-3'>
                     <label className='text-sm font-medium text-gray-600 mb-2 block flex items-center gap-1'>
                         <i className="ri-key-2-fill text-yellow-500"></i>
-                        Enter rider's OTP to start trip
+                        Enter the customer's OTP after loading the goods
                     </label>
                     <input
                         value={otp}
@@ -128,7 +131,7 @@ const ConfirmRidePopUp = (props) => {
                     {isLoading ? (
                         <><div className='w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin'></div> Verifying...</>
                     ) : (
-                        <><i className="ri-check-double-fill"></i> Confirm & Start Ride</>
+                        <><i className="ri-check-double-fill"></i> Confirm & Start Delivery</>
                     )}
                 </button>
                 <button

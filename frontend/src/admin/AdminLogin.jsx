@@ -38,7 +38,7 @@ const AdminLogin = () => {
             <i className="ri-shield-user-fill text-2xl text-white"></i>
           </span>
           <h2 className='text-3xl font-black tracking-tight'>Admin Sign In</h2>
-          <p className='text-gray-400 text-sm mt-1'>Manage riders, captains, rides and fares.</p>
+          <p className='text-gray-400 text-sm mt-1'>Manage customers, drivers, orders and fares.</p>
         </div>
 
         <form onSubmit={submitHandler} className='space-y-5'>

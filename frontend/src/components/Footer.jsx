@@ -6,14 +6,14 @@ const Footer = () => {
     <footer className='bg-black border-t border-white/10 py-10 px-6 text-gray-400 text-sm mt-auto w-full'>
       <div className='max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6'>
         <div className='flex items-center gap-3'>
-          <span className='text-lg font-black tracking-tight text-white'>Ride<span className='text-blue-400'>X</span></span>
-          <span className='text-xs text-gray-500'>© 2025 RideX. All rights reserved.</span>
+          <span className='text-lg font-black tracking-tight text-white'>Khushi<span className='text-blue-400'> Transport</span></span>
+          <span className='text-xs text-gray-500'>© 2026 Khushi Transport. All rights reserved.</span>
         </div>
 
         <div className='flex flex-wrap items-center gap-6 text-xs text-gray-400'>
           <Link to='/' className='hover:text-white transition-colors'>Home</Link>
-          <Link to='/signup' className='hover:text-white transition-colors'>Rider Signup</Link>
-          <Link to='/captain-signup' className='hover:text-white transition-colors'>Captain Signup</Link>
+          <Link to='/signup' className='hover:text-white transition-colors'>Customer Signup</Link>
+          <Link to='/captain-signup' className='hover:text-white transition-colors'>Driver Signup</Link>
           <a href='#' className='hover:text-white transition-colors'>Privacy Policy</a>
           <a href='#' className='hover:text-white transition-colors'>Terms of Service</a>
         </div>

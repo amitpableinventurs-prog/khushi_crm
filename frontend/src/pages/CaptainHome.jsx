@@ -10,6 +10,7 @@ import { CaptainDataContext } from '../context/CapatainContext'
 import axios from 'axios'
 import LiveTracking from '../components/LiveTracking'
 import PushNotificationButton from '../components/PushNotificationButton'
+import CaptainKycStatus from '../components/CaptainKycStatus'
 
 const CaptainHome = () => {
     const [ridePopupPanel, setRidePopupPanel] = useState(false)
@@ -23,7 +24,7 @@ const CaptainHome = () => {
     const { captain } = useContext(CaptainDataContext)
 
     useEffect(() => {
-        if (!captain?._id) return
+        if (!captain?._id || captain.kyc?.status !== 'verified') return
 
         const registerCaptain = () => {
             socket.emit('join', {
@@ -71,7 +72,7 @@ const CaptainHome = () => {
                         return prev
                     })
                 }
-            } catch (err) {
+            } catch {
                 // Ignore silent polling errors
             }
         }
@@ -154,16 +155,18 @@ const CaptainHome = () => {
             {/* Modern Floating Captain Top Bar */}
             <div className='fixed top-3 left-3 right-3 z-50 flex items-center justify-between px-4 py-2.5 bg-white/85 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-white/60 transition-all'>
                 <div className='flex items-center gap-3'>
-                    <span className='text-lg font-black tracking-tight text-gray-900'>Ride<span className='text-blue-500'>X</span></span>
+                    <span className='text-lg font-black tracking-tight text-gray-900'>Khushi<span className='text-blue-500'> Transport</span></span>
                     <span className='h-4 w-px bg-gray-200'></span>
-                    <div className='flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded-full border border-green-200'>
-                        <span className='h-2 w-2 rounded-full bg-green-500 animate-pulse'></span>
-                        <span className='text-[11px] font-extrabold text-green-700 uppercase tracking-wider'>Captain Online</span>
+                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${captain?.kyc?.status === 'verified' ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+                        <span className={`h-2 w-2 rounded-full ${captain?.kyc?.status === 'verified' ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`}></span>
+                        <span className={`text-[11px] font-extrabold uppercase tracking-wider ${captain?.kyc?.status === 'verified' ? 'text-green-700' : 'text-yellow-700'}`}>
+                            {captain?.kyc?.status === 'verified' ? 'Driver Online' : 'KYC ' + (captain?.kyc?.status || 'pending')}
+                        </span>
                     </div>
                 </div>
 
                 <div className='flex items-center gap-2'>
-                    <PushNotificationButton />
+                    {captain?.kyc?.status === 'verified' && <PushNotificationButton />}
                     <Link
                         to='/captain-profile'
                         className='h-9 w-9 bg-gray-100/80 hover:bg-black hover:text-white flex items-center justify-center rounded-xl transition-all duration-200 text-gray-700 shadow-sm'
@@ -181,16 +184,23 @@ const CaptainHome = () => {
                 </div>
             </div>
 
-            <div className='h-[60%] pt-16 relative'>
-                <LiveTracking />
-            </div>
-
-            <div className='h-[40%] p-6 bg-white rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.08)] z-10 overflow-y-auto max-w-2xl mx-auto w-full'>
-                <CaptainDetails />
-            </div>
+            {captain?.kyc?.status === 'verified' ? (
+                <>
+                    <div className='h-[60%] pt-16 relative'>
+                        <LiveTracking />
+                    </div>
+                    <div className='h-[40%] p-6 bg-white rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.08)] z-10 overflow-y-auto max-w-2xl mx-auto w-full'>
+                        <CaptainDetails />
+                    </div>
+                </>
+            ) : (
+                <main className='flex-1 overflow-y-auto bg-slate-950 px-4 pb-8 pt-4'>
+                    <CaptainKycStatus />
+                </main>
+            )}
 
             {/* Ride Request Panel */}
-            <div
+            {captain?.kyc?.status === 'verified' && <div
                 ref={ridePopupPanelRef}
                 className='fixed inset-x-0 bottom-0 z-50 translate-y-full max-w-lg mx-auto w-full bg-white rounded-t-3xl shadow-2xl px-4 py-8 pt-10'
             >
@@ -200,10 +210,10 @@ const CaptainHome = () => {
                     setConfirmRidePopupPanel={setConfirmRidePopupPanel}
                     confirmRide={confirmRide}
                 />
-            </div>
+            </div>}
 
             {/* OTP Confirmation Panel */}
-            <div
+            {captain?.kyc?.status === 'verified' && <div
                 ref={confirmRidePopupPanelRef}
                 className='fixed inset-x-0 bottom-0 z-50 translate-y-full max-w-lg mx-auto w-full bg-white rounded-t-3xl shadow-2xl px-4 py-6 pt-8 max-h-[92vh] overflow-y-auto'
             >
@@ -212,7 +222,7 @@ const CaptainHome = () => {
                     setConfirmRidePopupPanel={setConfirmRidePopupPanel}
                     setRidePopupPanel={setRidePopupPanel}
                 />
-            </div>
+            </div>}
         </div>
     )
 }

@@ -12,11 +12,12 @@ const paymentService = require('../services/payment.service');
 const twilioService = require('../services/twilio.service');
 const fcmService = require('../services/fcm.service');
 const { validationResult } = require('express-validator');
+const { vehicleLabel } = require('../config/vehicles');
 
 const { RIDE_STATUSES, ACTIVE_STATUSES, escapeRegex, getPagination, paginated } = adminService;
 
 const USER_FIELDS = 'fullname email phone isBlocked createdAt';
-const CAPTAIN_FIELDS = 'fullname email phone status isBlocked vehicle location createdAt';
+const CAPTAIN_FIELDS = 'fullname email phone status isBlocked vehicle location createdAt kyc.status kyc.documentsSubmitted kyc.submittedAt kyc.reviewedAt kyc.reviewNote';
 
 const validate = (req, res) => {
     const errors = validationResult(req);
@@ -207,6 +208,9 @@ const buildRideFilter = async (query) => {
         filter.$or = [
             { pickup: regex },
             { destination: regex },
+            { receiverName: regex },
+            { receiverPhone: regex },
+            { goodsType: regex },
             { user: { $in: users.map(u => u._id) } },
             { captain: { $in: captains.map(c => c._id) } },
         ];
@@ -238,13 +242,13 @@ module.exports.exportRides = handle(async (req, res) => {
     const filter = await buildRideFilter(req.query);
     const rides = await populateRide(rideModel.find(filter).sort({ createdAt: -1 }).limit(5000));
 
-    const header = [ 'Ride ID', 'Created', 'Completed', 'Status', 'Vehicle', 'Rider', 'Rider email', 'Captain', 'Captain email', 'Plate', 'Pickup', 'Destination', 'Distance (km)', 'Duration (min)', 'Fare (INR)', 'Payment method', 'Payment status', 'Razorpay payment ID', 'Cancelled by', 'Cancel reason' ];
+    const header = [ 'Order ID', 'Created', 'Completed', 'Status', 'Vehicle', 'Customer', 'Customer email', 'Driver', 'Driver email', 'Plate', 'Pickup', 'Drop', 'Goods', 'Weight (kg)', 'Helpers', 'Receiver', 'Receiver phone', 'Distance (km)', 'Duration (min)', 'Fare (INR)', 'Payment method', 'Payment status', 'Razorpay payment ID', 'Cancelled by', 'Cancel reason' ];
     const rows = rides.map(r => [
         r._id,
         r.createdAt?.toISOString(),
         r.completedAt?.toISOString(),
         r.status,
-        r.vehicleType,
+        vehicleLabel(r.vehicleType),
         personName(r.user),
         r.user?.email,
         personName(r.captain),
@@ -252,6 +256,11 @@ module.exports.exportRides = handle(async (req, res) => {
         r.captain?.vehicle?.plate,
         r.pickup,
         r.destination,
+        r.goodsType,
+        r.goodsWeight,
+        r.helpers || 0,
+        r.receiverName,
+        r.receiverPhone,
         r.distance ? (r.distance / 1000).toFixed(1) : '',
         r.duration ? Math.round(r.duration / 60) : '',
         r.fare,
@@ -302,6 +311,9 @@ module.exports.listCaptains = handle(async (req, res) => {
     const pagination = getPagination(req.query);
     const filter = {};
     if (req.query.status) filter.status = req.query.status;
+    if (req.query.kycStatus) {
+        filter[ 'kyc.status' ] = req.query.kycStatus === 'pending' ? { $in: [ 'pending', null ] } : req.query.kycStatus;
+    }
     if (req.query.vehicleType) filter[ 'vehicle.vehicleType' ] = req.query.vehicleType;
     if (req.query.blocked === 'true') filter.isBlocked = true;
     if (req.query.blocked === 'false') filter.isBlocked = { $ne: true };
@@ -336,6 +348,59 @@ module.exports.getCaptain = handle(async (req, res) => {
 
     res.status(200).json({ ...captain, stats: stats[ String(captain._id) ] || adminService.emptyStats, recentRides });
 });
+
+module.exports.getCaptainKycDocument = handle(async (req, res) => {
+    const documentType = req.params.document
+    if (![ 'license', 'identity' ].includes(documentType)) {
+        return res.status(404).json({ message: 'KYC document not found.' })
+    }
+
+    const captain = await captainModel.findById(req.params.id)
+        .select(`+kyc.documents.${documentType}.content +kyc.documents.${documentType}.contentType`)
+    const document = captain?.kyc?.documents?.[ documentType ]
+    if (!document?.content || !document.contentType) {
+        return res.status(404).json({ message: 'KYC document not found.' })
+    }
+
+    res.set('Content-Type', document.contentType)
+    res.set('Cache-Control', 'private, no-store')
+    res.set('X-Content-Type-Options', 'nosniff')
+    return res.status(200).send(document.content)
+})
+
+module.exports.reviewCaptainKyc = handle(async (req, res) => {
+    const { status, reviewNote } = req.body
+    const captain = await captainModel.findById(req.params.id)
+        .select('+kyc.documents.license.content +kyc.documents.identity.content')
+    if (!captain) return res.status(404).json({ message: 'Driver not found.' })
+    if (status === 'rejected' && !reviewNote?.trim()) {
+        return res.status(400).json({ message: 'Add a reason when rejecting KYC.' })
+    }
+    if (status === 'verified' && (!captain.kyc?.documents?.license?.content || !captain.kyc?.documents?.identity?.content)) {
+        return res.status(400).json({ message: 'Both KYC documents must be submitted before approval.' })
+    }
+    if (status === 'rejected' && await rideModel.exists({
+        captain: captain._id,
+        status: { $in: [ 'accepted', 'ongoing' ] },
+    })) {
+        return res.status(409).json({ message: "Finish or cancel this driver's active ride before rejecting KYC." })
+    }
+
+    captain.kyc.status = status
+    captain.kyc.reviewedAt = new Date()
+    captain.kyc.reviewedBy = req.admin._id
+    captain.kyc.reviewNote = status === 'rejected' ? reviewNote.trim() : ''
+    captain.status = 'inactive'
+    await captain.save()
+    return res.status(200).json({
+        kyc: {
+            status: captain.kyc.status,
+            submittedAt: captain.kyc.submittedAt,
+            reviewedAt: captain.kyc.reviewedAt,
+            reviewNote: captain.kyc.reviewNote,
+        },
+    })
+})
 
 module.exports.updateCaptain = handle(async (req, res) => {
     const { fullname, email, vehicle, status, phone } = req.body;
@@ -492,6 +557,7 @@ module.exports.updateFareSettings = handle(async (req, res) => {
         perKm: Number(req.body[ type ].perKm),
         perMinute: Number(req.body[ type ].perMinute),
     } ]));
+    fares.helperCharge = Number(req.body.helperCharge);
 
     res.status(200).json(await settingService.updateFareSettings(fares));
 });

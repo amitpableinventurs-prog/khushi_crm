@@ -37,14 +37,8 @@ export const timeAgo = (value) => {
   return formatDate(value)
 }
 
-// Rides use auto/car/moto, captain vehicles use auto/car/motorcycle
-export const VEHICLE_LABELS = {
-  car: 'Car',
-  auto: 'Auto',
-  moto: 'Moto',
-  motorcycle: 'Motorcycle',
-  unknown: 'Not recorded',
-}
+// Orders and driver vehicles share one list of goods vehicle types
+export { VEHICLE_LABELS, VEHICLES, formatCapacity, goodsLine } from '../vehicles'
 
 export const RIDE_STATUSES = [ 'pending', 'accepted', 'ongoing', 'completed', 'cancelled' ]
 

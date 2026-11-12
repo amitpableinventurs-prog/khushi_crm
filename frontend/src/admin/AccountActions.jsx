@@ -36,14 +36,14 @@ const AccountActions = ({ kind, noun, person, onChange, listPath }) => {
     block: {
       title: `Block this ${noun.toLowerCase()}?`,
       body: kind === 'captains'
-        ? 'They will be signed out, set offline, stop receiving ride requests and won’t be able to log in until you unblock them.'
-        : 'They will be signed out and won’t be able to log in or book rides until you unblock them.',
+        ? 'They will be signed out, set offline, stop receiving order requests and won’t be able to log in until you unblock them.'
+        : 'They will be signed out and won’t be able to log in or place orders until you unblock them.',
       action: 'Block',
     },
     unblock: { title: `Unblock this ${noun.toLowerCase()}?`, body: 'They will be able to log in again.', action: 'Unblock' },
     delete: {
       title: `Delete this ${noun.toLowerCase()}?`,
-      body: 'The account is removed permanently. Their past rides stay in ride history. This can’t be undone.',
+      body: 'The account is removed permanently. Their past orders stay in order history. This can’t be undone.',
       action: 'Delete permanently',
     },
   }[ confirm ]

@@ -14,9 +14,9 @@ const MENU = [
   {
     section: 'Operations',
     items: [
-      { to: '/admin/rides', label: 'Rides', icon: 'ri-route-line' },
-      { to: '/admin/captains', label: 'Captains', icon: 'ri-steering-2-line' },
-      { to: '/admin/riders', label: 'Riders', icon: 'ri-user-3-line' },
+      { to: '/admin/rides', label: 'Orders', icon: 'ri-route-line' },
+      { to: '/admin/captains', label: 'Drivers', icon: 'ri-steering-2-line' },
+      { to: '/admin/riders', label: 'Customers', icon: 'ri-user-3-line' },
     ],
   },
   {

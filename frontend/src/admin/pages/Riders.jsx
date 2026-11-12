@@ -19,7 +19,7 @@ const Riders = () => {
 
   return (
     <div>
-      <PageHeader title='Riders' subtitle='Customers who book rides' />
+      <PageHeader title='Customers' subtitle='Customers who book goods deliveries' />
       <ErrorBanner>{error}</ErrorBanner>
 
       <form
@@ -40,9 +40,9 @@ const Riders = () => {
         {!data ? <Spinner /> : (
           <>
             <Table
-              columns={[ 'Rider', 'Account', 'Rides', 'Completed', 'Cancelled', 'Total spent', 'Last ride', 'Joined' ]}
+              columns={[ 'Customer', 'Account', 'Orders', 'Completed', 'Cancelled', 'Total spent', 'Last order', 'Joined' ]}
               items={data.items}
-              empty={hasFilters ? 'No riders match these filters.' : 'No riders registered yet.'}
+              empty={hasFilters ? 'No customers match these filters.' : 'No customers registered yet.'}
               onRowClick={u => navigate(`/admin/riders/${u._id}`)}
               minWidth={900}
               renderCells={u => (

@@ -172,6 +172,7 @@ module.exports.getCaptainsInTheRadius = async (ltd, lng, radius) => {
         try {
             captains = await captainModel.find({
                 isBlocked: { $ne: true },
+                'kyc.status': 'verified',
                 location: {
                     $geoWithin: {
                         $centerSphere: [[lng, ltd], radius / 6371]
@@ -182,7 +183,7 @@ module.exports.getCaptainsInTheRadius = async (ltd, lng, radius) => {
     }
 
     if (!captains || captains.length === 0) {
-        captains = await captainModel.find({ isBlocked: { $ne: true } });
+        captains = await captainModel.find({ isBlocked: { $ne: true }, 'kyc.status': 'verified' });
     }
 
     return captains;

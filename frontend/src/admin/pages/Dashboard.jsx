@@ -46,9 +46,9 @@ const Dashboard = () => {
 
       <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-6'>
         <StatTile label="Today's revenue" value={formatMoney(today.revenue)} hint={`${today.ridesCompleted} completed today`} icon='ri-money-rupee-circle-line' />
-        <StatTile label='Rides right now' value={formatNumber(data.rides.active)} hint={`${data.rides.byStatus.pending} waiting for a captain`} icon='ri-radar-line' />
-        <StatTile label='Captains online' value={`${data.captains.online} / ${data.captains.total}`} hint={`${data.captains.blocked} blocked`} icon='ri-steering-2-line' />
-        <StatTile label='Riders' value={formatNumber(data.users.total)} hint={`${period.summary.newUsers} new in ${days} days`} icon='ri-user-3-line' />
+        <StatTile label='Active orders' value={formatNumber(data.rides.active)} hint={`${data.rides.byStatus.pending} waiting for a driver`} icon='ri-radar-line' />
+        <StatTile label='Drivers online' value={`${data.captains.online} / ${data.captains.total}`} hint={`${data.captains.blocked} blocked`} icon='ri-steering-2-line' />
+        <StatTile label='Customers' value={formatNumber(data.users.total)} hint={`${period.summary.newUsers} new in ${days} days`} icon='ri-user-3-line' />
         <StatTile label={`Revenue, ${days} days`} value={formatMoney(period.summary.revenue)} hint={`Avg fare ${formatMoney(period.summary.averageFare)}`} icon='ri-line-chart-line' />
         <StatTile
           label='Completion rate'
@@ -59,9 +59,9 @@ const Dashboard = () => {
       </div>
 
       <div className='grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4'>
-        <Card title='Completed rides per day' subtitle={`Last ${days} days`}>
+        <Card title='Completed orders per day' subtitle={`Last ${days} days`}>
           <ChartTableToggle
-            chart={<ColumnChart data={daily.map(d => ({ ...d, value: d.completed }))} formatValue={v => `${v} ride${v === 1 ? '' : 's'}`} ariaLabel='Completed rides per day' />}
+            chart={<ColumnChart data={daily.map(d => ({ ...d, value: d.completed }))} formatValue={v => `${v} order${v === 1 ? '' : 's'}`} ariaLabel='Completed orders per day' />}
             columns={[ 'Date', 'Requested', 'Completed' ]}
             rows={daily.map(d => [ d.label, d.rides, d.completed ])}
           />
@@ -79,12 +79,12 @@ const Dashboard = () => {
         <Card title='Revenue by vehicle type' subtitle={`Last ${days} days`}>
           {period.byVehicle.length
             ? <BarList data={period.byVehicle.map(v => ({ key: v.vehicleType, label: VEHICLE_LABELS[ v.vehicleType ] || v.vehicleType, value: v.revenue, hint: plural(v.rides, "ride") }))} formatValue={formatMoney} />
-            : <p className='text-sm text-[#898781] py-6 text-center'>No completed rides in this period.</p>}
+            : <p className='text-sm text-[#898781] py-6 text-center'>No completed orders in this period.</p>}
         </Card>
-        <Card title='Rides by status' subtitle={`Requested in the last ${days} days`}>
+        <Card title='Orders by status' subtitle={`Requested in the last ${days} days`}>
           <BarList data={Object.entries(period.byStatus).map(([ status, count ]) => ({ key: status, label: status.charAt(0).toUpperCase() + status.slice(1), value: count }))} formatValue={formatNumber} />
         </Card>
-        <Card title='Top captains' subtitle={`By earnings, last ${days} days`}>
+        <Card title='Top drivers' subtitle={`By earnings, last ${days} days`}>
           {period.topCaptains.length ? (
             <ol className='space-y-3 text-sm'>
               {period.topCaptains.slice(0, 5).map((c, i) => (
@@ -95,20 +95,20 @@ const Dashboard = () => {
                   </div>
                   <div className='text-right'>
                     <p className='font-medium'>{formatMoney(c.revenue)}</p>
-                    <p className='text-xs text-[#898781]'>{plural(c.rides, 'ride')}</p>
+                    <p className='text-xs text-[#898781]'>{plural(c.rides, 'order')}</p>
                   </div>
                 </li>
               ))}
             </ol>
-          ) : <p className='text-sm text-[#898781] py-6 text-center'>No completed rides in this period.</p>}
+          ) : <p className='text-sm text-[#898781] py-6 text-center'>No completed orders in this period.</p>}
         </Card>
       </div>
 
-      <Card title='Latest rides' padded={false} actions={<button onClick={() => navigate('/admin/rides')} className='text-sm text-[#c3c2b7] hover:text-white'>View all →</button>}>
+      <Card title='Latest orders' padded={false} actions={<button onClick={() => navigate('/admin/rides')} className='text-sm text-[#c3c2b7] hover:text-white'>View all →</button>}>
         <Table
-          columns={[ 'Requested', 'Rider', 'Captain', 'Route', 'Fare', 'Status' ]}
+          columns={[ 'Requested', 'Customer', 'Driver', 'Route', 'Fare', 'Status' ]}
           items={data.recentRides}
-          empty='No rides yet. They will appear here as soon as riders book.'
+          empty='No orders yet. They will appear here as soon as customers book.'
           onRowClick={r => navigate(`/admin/rides/${r._id}`)}
           renderCells={r => (
             <>

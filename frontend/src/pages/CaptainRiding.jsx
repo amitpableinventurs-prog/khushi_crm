@@ -62,7 +62,7 @@ const CaptainRiding = () => {
                         </div>
                         <div className='flex-1 min-w-0'>
                             <p className='font-black text-base leading-tight'>Payment Received! 💰</p>
-                            <p className='text-green-100 text-xs mt-0.5'>{paymentMethod === 'online' ? `Rider paid ₹${rideData?.fare} online — you can finish the ride` : `Rider paid ₹${rideData?.fare} cash — confirm to finish ride`}</p>
+                            <p className='text-green-100 text-xs mt-0.5'>{paymentMethod === 'online' ? `Customer paid ₹${rideData?.fare} online — you can finish the delivery` : `Customer paid ₹${rideData?.fare} cash — confirm to finish the delivery`}</p>
                         </div>
                         <button
                             onClick={() => setShowPaymentAlert(false)}
@@ -77,7 +77,7 @@ const CaptainRiding = () => {
             {/* Top — Map */}
             <div className='h-[75%] relative'>
                 <div className='fixed p-4 top-0 left-0 right-0 z-10 flex items-center justify-between'>
-                    <span className='text-xl font-black tracking-tight text-white drop-shadow-md'>Ride<span className='text-yellow-300'>X</span></span>
+                    <span className='text-xl font-black tracking-tight text-white drop-shadow-md'>Khushi<span className='text-yellow-300'> Transport</span></span>
                     <Link to='/captain-home' className='h-10 w-10 bg-white shadow-lg flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors'>
                         <i className="text-lg font-medium ri-home-5-line text-gray-700"></i>
                     </Link>
@@ -101,7 +101,7 @@ const CaptainRiding = () => {
                             </div>
                             <p className='text-sm font-medium text-green-900 flex items-center gap-1'>
                                 <i className="ri-money-rupee-circle-fill"></i>
-                                Rider paid ₹{rideData?.fare} · Tap to finish
+                                Customer paid ₹{rideData?.fare} · Tap to finish
                             </p>
                         </div>
                         <button className='bg-white text-green-700 font-black py-3 px-6 rounded-2xl shadow-xl flex items-center gap-2'>
@@ -117,7 +117,7 @@ const CaptainRiding = () => {
                             </p>
                         </div>
                         <button className='bg-black text-white font-bold py-3 px-8 rounded-2xl shadow-xl shadow-black/20 hover:bg-gray-900 transition-colors flex items-center gap-2'>
-                            Complete Trip <i className="ri-arrow-right-line"></i>
+                            Complete Delivery <i className="ri-arrow-right-line"></i>
                         </button>
                     </div>
                 )}

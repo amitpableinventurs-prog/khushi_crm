@@ -14,6 +14,8 @@ import PushNotificationButton from '../components/PushNotificationButton'
 import { useNavigate, Link } from 'react-router-dom'
 import LiveTracking from '../components/LiveTracking'
 
+const EMPTY_GOODS = { goodsType: '', goodsWeight: '', receiverName: '', receiverPhone: '', helpers: 0, notes: '' }
+
 const Home = () => {
     const [pickup, setPickup] = useState('')
     const [destination, setDestination] = useState('')
@@ -36,6 +38,9 @@ const Home = () => {
     const [vehicleType, setVehicleType] = useState(null)
     const [ride, setRide] = useState(null)
     const [isFindingFare, setIsFindingFare] = useState(false)
+    const [goods, setGoods] = useState(EMPTY_GOODS)
+    const [isBooking, setIsBooking] = useState(false)
+    const [bookingError, setBookingError] = useState('')
 
     const navigate = useNavigate()
     const { socket } = useContext(SocketContext)
@@ -226,19 +231,32 @@ const Home = () => {
     }
 
     async function createRide() {
+        setIsBooking(true)
+        setBookingError('')
         try {
             const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/rides/create`, {
                 pickup,
                 destination,
-                vehicleType
+                vehicleType,
+                goodsType: goods.goodsType,
+                goodsWeight: goods.goodsWeight ? Number(goods.goodsWeight) : undefined,
+                receiverName: goods.receiverName.trim(),
+                receiverPhone: goods.receiverPhone.trim(),
+                helpers: goods.helpers,
+                notes: goods.notes.trim() || undefined
             }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             })
-            if (response.data) {
-                setRide(response.data)
-            }
+            setRide(response.data)
+            setConfirmRidePanel(false)
+            setVehiclePanel(false)
+            setVehicleFound(true)
+            setGoods(EMPTY_GOODS)
         } catch (err) {
-            console.error("Error creating ride:", err)
+            const data = err.response?.data
+            setBookingError(data?.errors?.[0]?.msg || data?.message || 'Could not place the booking. Please try again.')
+        } finally {
+            setIsBooking(false)
         }
     }
 
@@ -287,15 +305,15 @@ const Home = () => {
             {/* Modern Floating Top Navigation Bar */}
             <div className='fixed top-3 left-3 right-3 z-50 flex items-center justify-between px-4 py-2.5 bg-white/85 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-white/60 transition-all'>
                 <div className='flex items-center gap-3'>
-                    <span className='text-lg font-black tracking-tight text-gray-900'>Ride<span className='text-blue-500'>X</span></span>
+                    <span className='text-lg font-black tracking-tight text-gray-900'>Khushi<span className='text-blue-500'> Transport</span></span>
                     <span className='h-4 w-px bg-gray-200'></span>
-                    <span className='text-xs font-bold text-gray-700 hidden sm:inline-block'>Ride Easy</span>
+                    <span className='text-xs font-bold text-gray-700 hidden sm:inline-block'>Goods Delivery</span>
                 </div>
 
                 <div className='flex items-center gap-2'>
                     <div className='text-right hidden sm:block mr-1'>
                         <p className='text-[10px] uppercase tracking-wider text-gray-400 font-semibold'>Logged in as</p>
-                        <p className='text-xs font-bold capitalize text-gray-800'>{user?.fullname?.firstname || 'Rider'}</p>
+                        <p className='text-xs font-bold capitalize text-gray-800'>{user?.fullname?.firstname || 'Customer'}</p>
                     </div>
                     <PushNotificationButton />
                     <Link
@@ -336,8 +354,8 @@ const Home = () => {
 
                     <div className='flex items-center justify-between mb-4'>
                         <div>
-                            <h4 className='text-xl font-black text-gray-900 leading-tight'>Where to today?</h4>
-                            <p className='text-xs text-gray-400'>Select route or search destination</p>
+                            <h4 className='text-xl font-black text-gray-900 leading-tight'>Send goods anywhere</h4>
+                            <p className='text-xs text-gray-400'>Enter pickup and drop to see vehicle prices</p>
                         </div>
                         <button
                             onClick={getCurrentLocation}
@@ -362,7 +380,7 @@ const Home = () => {
                                 onChange={handlePickupChange}
                                 className='bg-gray-50 pl-10 pr-4 py-3.5 text-sm rounded-2xl w-full border border-gray-200 focus:border-black focus:bg-white focus:outline-none transition-all text-gray-900 font-semibold placeholder:text-gray-400 shadow-inner'
                                 type="text"
-                                placeholder='Add a pickup location'
+                                placeholder='Pickup location'
                             />
                         </div>
 
@@ -377,7 +395,7 @@ const Home = () => {
                                 onChange={handleDestinationChange}
                                 className='bg-gray-50 pl-10 pr-4 py-3.5 text-sm rounded-2xl w-full border border-gray-200 focus:border-black focus:bg-white focus:outline-none transition-all text-gray-900 font-semibold placeholder:text-gray-400 shadow-inner'
                                 type="text"
-                                placeholder='Enter your destination'
+                                placeholder='Drop location'
                             />
                         </div>
                     </form>
@@ -388,8 +406,8 @@ const Home = () => {
                             {[
                                 { icon: 'ri-map-pin-2-line', label: 'Connaught Place' },
                                 { icon: 'ri-building-4-line', label: 'Cyber Hub' },
-                                { icon: 'ri-plane-line', label: 'IGI Airport' },
-                                { icon: 'ri-shopping-bag-3-line', label: 'Hauz Khas' }
+                                { icon: 'ri-store-2-line', label: 'Karol Bagh' },
+                                { icon: 'ri-building-2-line', label: 'Nehru Place' }
                             ].map((chip, idx) => (
                                 <button
                                     key={idx}
@@ -417,9 +435,9 @@ const Home = () => {
                         }`}
                     >
                         {isFindingFare ? (
-                            <><div className='w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin'></div> Calculating fare...</>
+                            <><div className='w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin'></div> Getting prices...</>
                         ) : (
-                            <><i className="ri-search-line font-bold"></i> Find Trip</>
+                            <><i className="ri-truck-line font-bold"></i> See Vehicles & Prices</>
                         )}
                     </button>
                 </div>
@@ -456,7 +474,10 @@ const Home = () => {
                     fare={fare}
                     vehicleType={vehicleType}
                     setConfirmRidePanel={setConfirmRidePanel}
-                    setVehicleFound={setVehicleFound}
+                    goods={goods}
+                    setGoods={setGoods}
+                    isBooking={isBooking}
+                    error={bookingError}
                 />
             </div>
 

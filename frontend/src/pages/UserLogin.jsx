@@ -49,8 +49,8 @@ const UserLogin = () => {
             <span className='h-12 w-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 inline-flex items-center justify-center mb-3 shadow-lg shadow-blue-500/30'>
               <i className="ri-user-3-fill text-2xl text-white"></i>
             </span>
-            <h2 className='text-3xl font-black tracking-tight'>Rider Sign In</h2>
-            <p className='text-gray-400 text-sm mt-1'>Welcome back! Log in to request rides.</p>
+            <h2 className='text-3xl font-black tracking-tight'>Customer Sign In</h2>
+            <p className='text-gray-400 text-sm mt-1'>Welcome back! Log in to book a goods vehicle.</p>
           </div>
 
           <form onSubmit={submitHandler} className='space-y-5'>
@@ -94,7 +94,7 @@ const UserLogin = () => {
 
           <div className='mt-6 text-center space-y-3 text-sm'>
             <p className='text-gray-400'>
-              New to RideX?{' '}
+              New to Khushi Transport?{' '}
               <Link to='/signup' className='text-white font-semibold hover:underline'>Create account</Link>
             </p>
             <div className='border-t border-white/10 pt-4'>
@@ -102,7 +102,7 @@ const UserLogin = () => {
                 to='/captain-login'
                 className='inline-flex items-center gap-2 text-yellow-400 text-xs font-semibold hover:text-yellow-300 transition-colors'
               >
-                <i className="ri-steering-2-fill"></i> Captain Sign In instead →
+                <i className="ri-steering-2-fill"></i> Driver Sign In instead →
               </Link>
             </div>
           </div>

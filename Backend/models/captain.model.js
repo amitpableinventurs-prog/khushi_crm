@@ -1,6 +1,48 @@
 const mongoose = require('mongoose')
+const { VEHICLE_TYPES } = require('../config/vehicles')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+
+const kycDocumentSchema = new mongoose.Schema({
+    content: {
+        type: Buffer,
+        select: false,
+    },
+    contentType: {
+        type: String,
+        enum: [ 'application/pdf', 'image/jpeg', 'image/png' ],
+    },
+}, { _id: false })
+
+const kycSchema = new mongoose.Schema({
+    status: {
+        type: String,
+        enum: [ 'pending', 'verified', 'rejected' ],
+        default: 'pending',
+    },
+    documentsSubmitted: {
+        type: Boolean,
+        default: false,
+    },
+    submittedAt: {
+        type: Date,
+        default: Date.now,
+    },
+    reviewedAt: Date,
+    reviewedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'admin',
+    },
+    reviewNote: {
+        type: String,
+        trim: true,
+        maxlength: 500,
+    },
+    documents: {
+        license: { type: kycDocumentSchema, select: false },
+        identity: { type: kycDocumentSchema, select: false },
+    },
+}, { _id: false })
 
 const captainSchema = new mongoose.Schema({
     fullname: {
@@ -56,6 +98,10 @@ const captainSchema = new mongoose.Schema({
         enum: [ 'active', 'inactive' ],
         default: 'inactive',
     },
+    kyc: {
+        type: kycSchema,
+        default: () => ({}),
+    },
 
     vehicle: {
         color: {
@@ -68,6 +114,7 @@ const captainSchema = new mongoose.Schema({
             required: true,
             minlength: [ 3, 'Plate must be at least 3 characters long' ],
         },
+        // load capacity in kg
         capacity: {
             type: Number,
             required: true,
@@ -76,7 +123,7 @@ const captainSchema = new mongoose.Schema({
         vehicleType: {
             type: String,
             required: true,
-            enum: [ 'car', 'motorcycle', 'auto' ],
+            enum: VEHICLE_TYPES,
         }
     },
 
@@ -92,7 +139,7 @@ const captainSchema = new mongoose.Schema({
 
 
 captainSchema.methods.generateAuthToken = function () {
-    const token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ _id: this._id, role: 'captain' }, process.env.JWT_SECRET, { expiresIn: '24h' });
     return token;
 }
 

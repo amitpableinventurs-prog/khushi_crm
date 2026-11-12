@@ -6,6 +6,7 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "create-admin": "node scripts/create-admin.js",
+    "seed-demo": "node scripts/seed-demo.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -23,6 +24,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^7.5.0",
     "mongoose": "^8.9.5",
+    "multer": "^2.5.0",
     "nodemailer": "^9.0.5",
     "socket.io": "^4.8.1"
   }

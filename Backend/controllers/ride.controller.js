@@ -12,14 +12,19 @@ module.exports.createRide = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { pickup, destination, vehicleType } = req.body;
+    const { pickup, destination, vehicleType, goodsType, goodsWeight, receiverName, receiverPhone, helpers, notes } = req.body;
 
     try {
-        const ride = await rideService.createRide({ user: req.user._id, pickup, destination, vehicleType });
+        const ride = await rideService.createRide({
+            user: req.user._id, pickup, destination, vehicleType,
+            goodsType, goodsWeight, receiverName, receiverPhone, helpers, notes
+        });
         res.status(201).json(ride);
 
         const pickupCoordinates = await mapService.getAddressCoordinate(pickup);
-        const captainsInRadius = await mapService.getCaptainsInTheRadius(pickupCoordinates.ltd, pickupCoordinates.lng, 2);
+        // Only drivers with the booked vehicle type get the request
+        const captainsInRadius = (await mapService.getCaptainsInTheRadius(pickupCoordinates.ltd, pickupCoordinates.lng, 2))
+            .filter(captain => captain.vehicle?.vehicleType === vehicleType);
 
         ride.otp = "";
         const rideWithUser = await rideModel.findOne({ _id: ride._id }).populate('user');
@@ -163,7 +168,7 @@ module.exports.getPendingRides = async (req, res) => {
         if (ltd && lng) {
             // Find pending rides and check proximity via map service
             const allPending = await rideModel
-                .find({ status: 'pending' })
+                .find({ status: 'pending', vehicleType: freshCaptain?.vehicle?.vehicleType })
                 .populate('user')
                 .sort({ createdAt: -1 })
                 .limit(10);
@@ -179,7 +184,7 @@ module.exports.getPendingRides = async (req, res) => {
             pendingRides = pendingRides.slice(0, 1);
         } else {
             pendingRides = await rideModel
-                .find({ status: 'pending' })
+                .find({ status: 'pending', vehicleType: freshCaptain?.vehicle?.vehicleType })
                 .populate('user')
                 .sort({ createdAt: -1 })
                 .limit(1);

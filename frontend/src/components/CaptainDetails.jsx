@@ -1,3 +1,4 @@
+import { vehicleLabel, formatCapacity } from '../vehicles'
 import React, { useContext, useEffect, useState } from 'react'
 import { CaptainDataContext } from '../context/CapatainContext'
 import { Link } from 'react-router-dom'
@@ -37,7 +38,7 @@ const CaptainDetails = () => {
             bg: 'bg-blue-50',
             iconColor: 'text-blue-500',
             value: loading ? '—' : stats.todayRides,
-            label: "Today's Rides",
+            label: "Today's Deliveries",
         },
         {
             icon: 'ri-money-rupee-circle-fill',
@@ -51,7 +52,7 @@ const CaptainDetails = () => {
             bg: 'bg-purple-50',
             iconColor: 'text-purple-500',
             value: loading ? '—' : stats.totalRides,
-            label: 'Total Rides',
+            label: 'Total Deliveries',
         },
         {
             icon: 'ri-trophy-fill',
@@ -72,7 +73,7 @@ const CaptainDetails = () => {
                     </h4>
                     <div className='flex items-center gap-1.5 mt-1'>
                         <i className="ri-star-fill text-yellow-400 text-xs"></i>
-                        <span className='text-xs text-gray-600 font-medium'>4.9 · Captain</span>
+                        <span className='text-xs text-gray-600 font-medium'>4.9 · Driver Partner</span>
                         <span className='text-gray-300 text-xs'>•</span>
                         <span className='text-xs text-green-600 font-semibold'>● Online</span>
                     </div>
@@ -82,12 +83,12 @@ const CaptainDetails = () => {
             {/* Vehicle info */}
             <div className='flex items-center gap-3 mb-4 bg-gray-50 rounded-2xl px-3 py-2.5 border border-gray-100'>
                 <div className='h-9 w-9 rounded-xl bg-black flex items-center justify-center flex-shrink-0'>
-                    <i className="ri-car-fill text-white text-sm"></i>
+                    <i className="ri-truck-fill text-white text-sm"></i>
                 </div>
                 <div className='flex-1 min-w-0'>
                     <p className='font-bold text-gray-800 uppercase tracking-wider text-sm'>{captain?.vehicle?.plate}</p>
                     <p className='text-xs text-gray-500 capitalize truncate'>
-                        {captain?.vehicle?.vehicleType} · {captain?.vehicle?.color} · {captain?.vehicle?.capacity} seats
+                        {vehicleLabel(captain?.vehicle?.vehicleType)} · {captain?.vehicle?.color} · {formatCapacity(captain?.vehicle?.capacity)}
                     </p>
                 </div>
                 <span className='bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex-shrink-0'>Active</span>

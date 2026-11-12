@@ -9,7 +9,7 @@ const Start = () => {
 
       {/* ── HEADER ── */}
       <header className='fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between bg-black/80 backdrop-blur-md border-b border-white/10'>
-        <span className='text-2xl font-black tracking-tight text-white'>Ride<span className='text-blue-400'>X</span></span>
+        <span className='text-2xl font-black tracking-tight text-white'>Khushi<span className='text-blue-400'> Transport</span></span>
         <nav className='hidden md:flex items-center gap-6 text-sm text-gray-300'>
           <a href='#features' className='hover:text-white transition-colors'>Features</a>
           <a href='#safety' className='hover:text-white transition-colors'>Safety</a>
@@ -22,15 +22,18 @@ const Start = () => {
               onClick={() => setMode('user')}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${mode === 'user' ? 'bg-white text-black shadow' : 'text-gray-400 hover:text-white'}`}
             >
-              Rider
+              Customer
             </button>
             <button
               onClick={() => setMode('captain')}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${mode === 'captain' ? 'bg-yellow-400 text-black shadow' : 'text-gray-400 hover:text-white'}`}
             >
-              Captain
+              Driver
             </button>
           </div>
+          <Link to='/vendor-register' className='hidden sm:inline text-sm font-medium text-yellow-300 hover:text-yellow-200'>
+            Fleet vendors
+          </Link>
           <Link
             to={mode === 'user' ? '/login' : '/captain-login'}
             className='text-sm font-medium hover:text-gray-300 transition-colors'
@@ -66,21 +69,21 @@ const Start = () => {
                 Available in your city
               </div>
               <h1 className='text-5xl md:text-7xl font-black mb-6 leading-tight'>
-                Go anywhere,<br />
+                Send anything,<br />
                 <span className='bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent'>
-                  anytime.
+                  anywhere in the city.
                 </span>
               </h1>
               <p className='text-lg md:text-xl text-gray-300 mb-10 max-w-xl mx-auto'>
-                Request a ride, hop in, and go. RideX makes transportation
-                across cities easier, faster, and safer than ever.
+                Book a 2 wheeler, tempo or truck in minutes. Khushi Transport moves
+                your goods with upfront prices, loading helpers and live tracking.
               </p>
               <div className='flex flex-col sm:flex-row items-center justify-center gap-4'>
                 <Link
                   to='/signup'
                   className='bg-white text-black font-bold px-8 py-4 rounded-full text-lg hover:bg-gray-100 transition-all duration-300 hover:scale-105 shadow-2xl'
                 >
-                  Get Started — it's free
+                  Book a Vehicle
                 </Link>
                 <Link
                   to='/login'
@@ -97,27 +100,33 @@ const Start = () => {
                 Earn on your schedule
               </div>
               <h1 className='text-5xl md:text-7xl font-black mb-6 leading-tight'>
-                Drive with<br />
+                Attach your vehicle<br />
                 <span className='bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent'>
-                  RideX.
+                  and earn.
                 </span>
               </h1>
               <p className='text-lg md:text-xl text-gray-300 mb-10 max-w-xl mx-auto'>
-                Become a captain and earn money on your own terms. Set your hours,
-                choose your rides, and be your own boss.
+                Join as a driver partner with your 2 wheeler, tempo or truck.
+                Get delivery orders near you and earn on your own schedule.
               </p>
               <div className='flex flex-col sm:flex-row items-center justify-center gap-4'>
                 <Link
                   to='/captain-signup'
                   className='bg-yellow-400 text-black font-bold px-8 py-4 rounded-full text-lg hover:bg-yellow-300 transition-all duration-300 hover:scale-105 shadow-2xl shadow-yellow-500/30'
                 >
-                  Start Driving Today
+                  Register Your Vehicle
                 </Link>
                 <Link
                   to='/captain-login'
                   className='border border-white/30 text-white font-medium px-8 py-4 rounded-full text-lg hover:bg-white/10 transition-all duration-300'
                 >
-                  Captain Login
+                  Driver Login
+                </Link>
+                <Link
+                  to='/vendor-register'
+                  className='border border-yellow-400/40 text-yellow-200 font-medium px-6 py-4 rounded-full text-lg hover:bg-yellow-400/10 transition-all duration-300'
+                >
+                  Register a Fleet
                 </Link>
               </div>
             </>
@@ -135,10 +144,10 @@ const Start = () => {
       <section id='features' className='py-24 px-6 bg-black'>
         <div className='max-w-5xl mx-auto'>
           <h2 className='text-3xl md:text-5xl font-black text-center mb-4'>
-            Why choose <span className='text-blue-400'>RideX?</span>
+            Why choose <span className='text-blue-400'>Khushi Transport?</span>
           </h2>
           <p className='text-center text-gray-400 mb-16 max-w-xl mx-auto'>
-            Every ride is designed to be safe, affordable, and on time.
+            Goods delivery that is simple to book, fairly priced and tracked end to end.
           </p>
 
           <div className='grid md:grid-cols-3 gap-6'>
@@ -146,20 +155,20 @@ const Start = () => {
               {
                 icon: 'ri-flashlight-fill',
                 color: 'from-blue-500 to-indigo-600',
-                title: 'Lightning Fast',
-                desc: 'Drivers near you get matched in seconds. Average wait time under 5 minutes.'
+                title: 'Vehicle in Minutes',
+                desc: 'Your booking goes to nearby driver partners with the vehicle size you picked.'
               },
               {
                 icon: 'ri-shield-check-fill',
                 color: 'from-green-500 to-emerald-600',
-                title: 'Always Safe',
-                desc: 'Real-time GPS tracking, verified drivers, and 24/7 emergency support.'
+                title: 'Safe Handover',
+                desc: 'Live tracking, OTP at pickup and the receiver contact shared with the driver.'
               },
               {
                 icon: 'ri-money-rupee-circle-fill',
                 color: 'from-yellow-500 to-orange-500',
-                title: 'Best Fares',
-                desc: 'Upfront pricing with no surge surprises. Choose from RideX Go, Moto, or Auto.'
+                title: 'Upfront Prices',
+                desc: 'See the fare for every vehicle before you book. Add loading helpers if you need them.'
               }
             ].map((f, i) => (
               <div
@@ -182,12 +191,12 @@ const Start = () => {
         <div className='max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-16'>
           <div className='flex-1'>
             <span className='text-green-400 text-sm font-semibold uppercase tracking-wider'>Safety first</span>
-            <h2 className='text-3xl md:text-5xl font-black mt-3 mb-6'>Your safety is our <span className='text-green-400'>priority</span></h2>
+            <h2 className='text-3xl md:text-5xl font-black mt-3 mb-6'>Your goods are in <span className='text-green-400'>safe hands</span></h2>
             <p className='text-gray-400 mb-8 leading-relaxed'>
-              Every captain is background verified. Your trip is tracked in real-time and shared with emergency contacts if needed. Our 24/7 safety team is always just a tap away.
+              Loading starts only after the driver enters your OTP, and you can follow the vehicle on the map until the goods reach the receiver.
             </p>
             <ul className='space-y-4'>
-              {['OTP-verified ride start', 'Live GPS tracking', '24/7 emergency support', 'Verified captain profiles'].map((item, i) => (
+              {['OTP-verified pickup', 'Live GPS tracking', 'Receiver name and phone on every order', 'Cash or online payment'].map((item, i) => (
                 <li key={i} className='flex items-center gap-3 text-gray-300'>
                   <span className='h-6 w-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0'>
                     <i className="ri-check-line text-green-400 text-xs"></i>
@@ -213,10 +222,10 @@ const Start = () => {
       <section className='py-20 px-6 bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border-y border-white/10'>
         <div className='max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center'>
           {[
-            { value: '10M+', label: 'Rides completed' },
-            { value: '500K+', label: 'Active captains' },
-            { value: '100+', label: 'Cities covered' },
-            { value: '4.9★', label: 'Average rating' },
+            { value: '5', label: 'Vehicle sizes' },
+            { value: '2.5 ton', label: 'Biggest load' },
+            { value: '2', label: 'Loading helpers on request' },
+            { value: 'OTP', label: 'Verified pickup' },
           ].map((s, i) => (
             <div key={i}>
               <div className='text-3xl md:text-4xl font-black text-white mb-2'>{s.value}</div>
@@ -231,9 +240,9 @@ const Start = () => {
         <div className='max-w-5xl mx-auto'>
           <div className='flex flex-col md:flex-row justify-between gap-12 mb-12'>
             <div className='max-w-xs'>
-              <span className='text-2xl font-black tracking-tight text-white block mb-4'>Ride<span className='text-blue-400'>X</span></span>
+              <span className='text-2xl font-black tracking-tight text-white block mb-4'>Khushi<span className='text-blue-400'> Transport</span></span>
               <p className='text-gray-400 text-sm leading-relaxed'>
-                Making transportation as reliable as running water, everywhere, for everyone.
+                Reliable goods transport for homes, shops and businesses.
               </p>
             </div>
             <div className='grid grid-cols-2 md:grid-cols-3 gap-8 text-sm'>
@@ -248,8 +257,9 @@ const Start = () => {
               <div>
                 <h4 className='font-semibold mb-4 text-white'>Products</h4>
                 <ul className='space-y-2 text-gray-400'>
-                  <li><Link to='/signup' className='hover:text-white transition-colors'>Ride</Link></li>
-                  <li><Link to='/captain-signup' className='hover:text-white transition-colors'>Drive</Link></li>
+                  <li><Link to='/signup' className='hover:text-white transition-colors'>Send Goods</Link></li>
+                  <li><Link to='/captain-signup' className='hover:text-white transition-colors'>Drive With Us</Link></li>
+                  <li><Link to='/vendor-register' className='hover:text-white transition-colors'>Register a Fleet</Link></li>
                   <li><a href='#' className='hover:text-white transition-colors'>Business</a></li>
                 </ul>
               </div>
@@ -264,7 +274,7 @@ const Start = () => {
             </div>
           </div>
           <div className='border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4'>
-            <p className='text-gray-500 text-sm'>© 2025 RideX. All rights reserved.</p>
+            <p className='text-gray-500 text-sm'>© 2026 Khushi Transport. All rights reserved.</p>
             <div className='flex gap-4'>
               {['ri-twitter-fill', 'ri-instagram-fill', 'ri-linkedin-fill', 'ri-github-fill'].map((icon, i) => (
                 <a key={i} href='#' className='h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors'>

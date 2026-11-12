@@ -1,4 +1,6 @@
 import React from 'react'
+import GoodsSummary from './GoodsSummary'
+import { vehicleLabel } from '../vehicles'
 
 const WaitingForDriver = (props) => {
     return (
@@ -9,7 +11,7 @@ const WaitingForDriver = (props) => {
             >
                 <i className="text-3xl text-gray-300 ri-arrow-down-wide-line"></i>
             </h5>
-            <h3 className='text-xl font-bold mb-4'>Captain is on the way!</h3>
+            <h3 className='text-xl font-bold mb-4'>Driver is on the way!</h3>
 
             {/* Driver Card */}
             <div className='bg-gray-50 rounded-2xl p-4 mb-4'>
@@ -18,14 +20,14 @@ const WaitingForDriver = (props) => {
                         <img
                             className='h-14 w-14 rounded-full object-cover border-2 border-black'
                             src='https://i.pinimg.com/236x/af/26/28/af26280b0ca305be47df0b799ed1b12b.jpg'
-                            alt='captain'
+                            alt='driver'
                         />
                         <div>
                             <h2 className='text-base font-bold capitalize'>
-                                {props.ride?.captain?.fullname?.firstname || 'Captain'} {props.ride?.captain?.fullname?.lastname || ''}
+                                {props.ride?.captain?.fullname?.firstname || 'Driver'} {props.ride?.captain?.fullname?.lastname || ''}
                             </h2>
                             <p className='text-sm text-gray-500'>
-                                {props.ride?.captain?.vehicle?.vehicleType || 'Vehicle'} · {props.ride?.captain?.vehicle?.color || ''}
+                                {vehicleLabel(props.ride?.captain?.vehicle?.vehicleType)} · {props.ride?.captain?.vehicle?.color || ''}
                             </p>
                             <div className='flex items-center gap-1 text-yellow-500'>
                                 <i className="ri-star-fill text-xs"></i>
@@ -44,7 +46,7 @@ const WaitingForDriver = (props) => {
                 {/* OTP Box */}
                 <div className='mt-4 bg-black text-white rounded-xl p-3 flex items-center justify-between'>
                     <div>
-                        <p className='text-xs text-gray-400'>Share this OTP with your captain</p>
+                        <p className='text-xs text-gray-400'>Share this OTP with the driver at pickup</p>
                         <h2 className='text-2xl font-black tracking-[0.4em] mt-1'>{props.ride?.otp}</h2>
                     </div>
                     <i className="ri-key-2-fill text-3xl text-yellow-400"></i>
@@ -66,7 +68,7 @@ const WaitingForDriver = (props) => {
                         <i className="ri-map-pin-fill text-red-500 text-xs"></i>
                     </div>
                     <div>
-                        <p className='text-xs text-gray-400 mb-0.5'>Destination</p>
+                        <p className='text-xs text-gray-400 mb-0.5'>Drop</p>
                         <p className='font-semibold text-gray-800'>{props.ride?.destination}</p>
                     </div>
                 </div>
@@ -81,6 +83,8 @@ const WaitingForDriver = (props) => {
                 </div>
             </div>
 
+            <GoodsSummary ride={props.ride} className='mt-3' />
+
             <button
                 onClick={() => {
                     if (props.onCancel) {
@@ -91,7 +95,7 @@ const WaitingForDriver = (props) => {
                 }}
                 className='w-full mt-4 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3.5 rounded-2xl text-sm transition-colors flex items-center justify-center gap-2 border border-red-200 active:scale-98 shadow-sm'
             >
-                <i className="ri-close-circle-line text-lg"></i> Cancel Ride
+                <i className="ri-close-circle-line text-lg"></i> Cancel Booking
             </button>
         </div>
     )

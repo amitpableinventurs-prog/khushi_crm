@@ -82,7 +82,7 @@ const ForgotPassword = () => {
             </span>
             <h2 className='text-3xl font-black tracking-tight'>Reset Password</h2>
             <p className='text-gray-400 text-sm mt-1'>
-              {role === 'captain' ? 'Captain Portal' : 'Rider Portal'} · {step === 1 ? 'Step 1 of 2' : 'Step 2 of 2'}
+              {role === 'captain' ? 'Driver Portal' : 'Customer Portal'} · {step === 1 ? 'Step 1 of 2' : 'Step 2 of 2'}
             </p>
           </div>
 
