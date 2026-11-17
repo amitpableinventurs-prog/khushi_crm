@@ -46,3 +46,34 @@ export const RIDE_STATUSES = [ 'pending', 'accepted', 'ongoing', 'completed', 'c
 export const dayKey = (date = new Date()) => date.toLocaleDateString('en-CA')
 
 export const daysAgoKey = (days) => dayKey(new Date(Date.now() - days * 24 * 60 * 60 * 1000))
+
+export const WEEKDAYS = [ 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' ]
+
+// Minutes since midnight and weekday in India time (commission slots and offers use India time)
+export const indiaClock = (date = new Date()) => {
+  const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', weekday: 'short', hourCycle: 'h23' }).formatToParts(date)
+  const get = (type) => parts.find(p => p.type === type).value
+  return { minutes: Number(get('hour')) * 60 + Number(get('minute')), day: WEEKDAYS.indexOf(get('weekday')) }
+}
+
+const toMinutes = (hhmm) => { const [ h, m ] = hhmm.split(':').map(Number); return h * 60 + m }
+
+// Same rule as the backend: an end before the start runs past midnight and belongs to the start day
+export const inWindow = ({ start, end, days }, clock) => {
+  let day = clock.day
+  if (start && end && start !== end) {
+    const s = toMinutes(start), e = toMinutes(end), m = clock.minutes
+    if (s < e) {
+      if (m < s || m >= e) return false
+    } else {
+      if (m < s && m >= e) return false
+      if (m < e) day = (day + 6) % 7
+    }
+  }
+  return !days?.length || days.includes(day)
+}
+
+export const describeDays = (days) => days?.length ? [ ...days ].sort().map(d => WEEKDAYS[ d ]).join(', ') : 'Every day'
+
+// Date from the API -> 'YYYY-MM-DD' in India time, for date inputs
+export const indiaDayKey = (value) => value ? new Date(value).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) : ''

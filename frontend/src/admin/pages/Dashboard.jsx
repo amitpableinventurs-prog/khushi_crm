@@ -49,7 +49,7 @@ const Dashboard = () => {
         <StatTile label='Active orders' value={formatNumber(data.rides.active)} hint={`${data.rides.byStatus.pending} waiting for a driver`} icon='ri-radar-line' />
         <StatTile label='Drivers online' value={`${data.captains.online} / ${data.captains.total}`} hint={`${data.captains.blocked} blocked`} icon='ri-steering-2-line' />
         <StatTile label='Customers' value={formatNumber(data.users.total)} hint={`${period.summary.newUsers} new in ${days} days`} icon='ri-user-3-line' />
-        <StatTile label={`Revenue, ${days} days`} value={formatMoney(period.summary.revenue)} hint={`Avg fare ${formatMoney(period.summary.averageFare)}`} icon='ri-line-chart-line' />
+        <StatTile label={`Revenue, ${days} days`} value={formatMoney(period.summary.revenue)} hint={`Commission ${formatMoney(period.summary.commission)}`} icon='ri-line-chart-line' />
         <StatTile
           label='Completion rate'
           value={period.summary.completionRate === null ? '—' : `${period.summary.completionRate}%`}

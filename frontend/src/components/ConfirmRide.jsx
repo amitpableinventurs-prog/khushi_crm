@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { GOODS_TYPES, MAX_HELPERS, VEHICLE_BY_KEY, formatCapacity } from '../vehicles'
 
 const inputClass = 'bg-gray-50 px-3.5 py-3 text-sm rounded-xl w-full border border-gray-200 focus:border-black focus:bg-white focus:outline-none text-gray-900 font-medium placeholder:text-gray-400'
@@ -10,7 +10,19 @@ const ConfirmRide = (props) => {
     const vehicle = VEHICLE_BY_KEY[props.vehicleType]
     const vehicleFare = props.fare?.[props.vehicleType]
     const helperCharge = Number(props.fare?.helperCharge) || 0
-    const total = vehicleFare ? vehicleFare + goods.helpers * helperCharge : null
+    // Server quote, used only once it matches what is on screen (vehicle and helpers)
+    const quote = props.quote && props.quote.vehicleFare === vehicleFare && props.quote.helpers === goods.helpers ? props.quote : null
+    const subtotal = vehicleFare ? vehicleFare + goods.helpers * helperCharge : null
+    const total = quote ? quote.fare : subtotal
+    const [codeInput, setCodeInput] = useState('')
+    const coupons = (props.promos || []).filter(p => p.kind === 'coupon' && (!p.vehicleTypes?.length || p.vehicleTypes.includes(props.vehicleType)))
+    const couponApplied = quote?.promo?.kind === 'coupon'
+    const applyCoupon = (code) => {
+        const clean = code.trim().toUpperCase()
+        if (!clean) return
+        props.setCouponCode(clean)
+        setCodeInput('')
+    }
 
     const set = (key) => (e) => setGoods({ ...goods, [key]: e.target.value })
 
@@ -116,6 +128,52 @@ const ConfirmRide = (props) => {
                     <input value={goods.notes} onChange={set('notes')} type='text' maxLength={300} placeholder='Floor, fragile items, landmark…' className={inputClass} />
                 </label>
 
+                <div className='bg-gray-50 rounded-2xl p-3.5'>
+                    <p className='font-semibold text-gray-900 text-sm mb-2'><i className='ri-coupon-3-line'></i> Coupon</p>
+                    {props.couponCode ? (
+                        <div>
+                            <div className='flex items-center justify-between gap-2 bg-white border border-dashed border-gray-300 rounded-xl px-3 py-2'>
+                                <span className='font-mono font-bold tracking-wide text-gray-900'>{props.couponCode}</span>
+                                <button type='button' onClick={() => props.setCouponCode('')} className='text-xs font-semibold text-red-600 hover:underline'>Remove</button>
+                            </div>
+                            {!quote && <p className='text-xs text-gray-500 mt-1.5'>Checking coupon…</p>}
+                            {couponApplied && <p className='text-xs text-green-700 font-semibold mt-1.5'><i className='ri-checkbox-circle-fill'></i> Applied — you save ₹{quote.discount}</p>}
+                            {quote?.couponError && <p className='text-xs text-red-600 mt-1.5'><i className='ri-error-warning-line'></i> {quote.couponError}</p>}
+                            {quote?.couponNote && <p className='text-xs text-amber-700 mt-1.5'><i className='ri-information-line'></i> {quote.couponNote}</p>}
+                        </div>
+                    ) : (
+                        <form className='flex gap-2' onSubmit={(e) => { e.preventDefault(); applyCoupon(codeInput) }}>
+                            <input
+                                value={codeInput}
+                                onChange={e => setCodeInput(e.target.value.toUpperCase())}
+                                maxLength={20}
+                                placeholder='Enter coupon code'
+                                aria-label='Coupon code'
+                                className={`${inputClass} font-mono uppercase`}
+                            />
+                            <button type='submit' disabled={!codeInput.trim()} className='px-4 rounded-xl bg-black text-white text-sm font-bold disabled:bg-gray-200 disabled:text-gray-400'>Apply</button>
+                        </form>
+                    )}
+                    {!props.couponCode && coupons.length > 0 && (
+                        <div className='flex gap-2 mt-2 overflow-x-auto no-scrollbar pb-1'>
+                            {coupons.map(c => (
+                                <button
+                                    key={c._id}
+                                    type='button'
+                                    onClick={() => applyCoupon(c.code)}
+                                    title={c.description || c.title}
+                                    className='flex-shrink-0 text-left bg-white border border-dashed border-green-400 rounded-xl px-2.5 py-1.5 hover:bg-green-50'
+                                >
+                                    <span className='block font-mono text-xs font-bold text-green-800'>{c.code}</span>
+                                    <span className='block text-[11px] text-gray-600 whitespace-nowrap'>
+                                        {c.title}{c.minFare ? ` · min ₹${c.minFare}` : ''}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
                 <div className='bg-gray-50 rounded-2xl p-3.5 text-sm'>
                     <div className='flex justify-between text-gray-600'>
                         <span>Vehicle fare</span><span>₹{vehicleFare ?? '--'}</span>
@@ -125,8 +183,17 @@ const ConfirmRide = (props) => {
                             <span>{goods.helpers} helper{goods.helpers > 1 ? 's' : ''}</span><span>₹{goods.helpers * helperCharge}</span>
                         </div>
                     )}
+                    {quote?.discount > 0 && (
+                        <div className='flex justify-between text-green-700 font-semibold mt-1'>
+                            <span>{quote.promo.kind === 'coupon' ? `Coupon ${quote.promo.code}` : quote.promo.title}</span><span>− ₹{quote.discount}</span>
+                        </div>
+                    )}
                     <div className='flex justify-between font-black text-gray-900 text-lg mt-2 pt-2 border-t border-gray-200'>
-                        <span>Total</span><span>₹{total ?? '--'}</span>
+                        <span>Total</span>
+                        <span>
+                            {quote?.discount > 0 && <span className='text-sm font-semibold text-gray-400 line-through mr-2'>₹{subtotal}</span>}
+                            ₹{total ?? '--'}
+                        </span>
                     </div>
                 </div>
 

@@ -13,6 +13,10 @@ const ACTIVE_STATUSES = [ 'pending', 'accepted', 'ongoing' ];
 
 // a completed ride counts on the day it was completed
 const completedDate = { $ifNull: [ '$completedAt', '$updatedAt' ] };
+// Orders placed before commission existed have no split: the driver kept the whole fare
+const driverEarning = { $ifNull: [ '$driverEarning', '$fare' ] };
+const commission = { $ifNull: [ '$commission', 0 ] };
+const discount = { $ifNull: [ '$discount', 0 ] };
 
 const toDayKey = (date) => new Date(date).toLocaleDateString('en-CA', { timeZone: TZ });
 
@@ -64,6 +68,11 @@ module.exports.getRideStatsFor = async (field, ids) => {
                 todayFare: {
                     $sum: { $cond: [ { $and: [ { $eq: [ '$status', 'completed' ] }, { $gte: [ completedDate, todayStart ] } ] }, '$fare', 0 ] }
                 },
+                totalEarning: { $sum: { $cond: [ { $eq: [ '$status', 'completed' ] }, driverEarning, 0 ] } },
+                todayEarning: {
+                    $sum: { $cond: [ { $and: [ { $eq: [ '$status', 'completed' ] }, { $gte: [ completedDate, todayStart ] } ] }, driverEarning, 0 ] }
+                },
+                totalCommission: { $sum: { $cond: [ { $eq: [ '$status', 'completed' ] }, commission, 0 ] } },
                 lastRideAt: { $max: '$createdAt' },
             }
         }
@@ -72,7 +81,7 @@ module.exports.getRideStatsFor = async (field, ids) => {
     return Object.fromEntries(stats.map(s => [ String(s._id), s ]));
 }
 
-const emptyStats = { totalRides: 0, completedRides: 0, cancelledRides: 0, totalFare: 0, todayRides: 0, todayFare: 0, lastRideAt: null };
+const emptyStats = { totalRides: 0, completedRides: 0, cancelledRides: 0, totalFare: 0, todayRides: 0, todayFare: 0, totalEarning: 0, todayEarning: 0, totalCommission: 0, lastRideAt: null };
 module.exports.emptyStats = emptyStats;
 
 // Everything the Reports page (and the dashboard chart) needs for one date range
@@ -95,6 +104,9 @@ module.exports.buildReport = async ({ start, end }) => {
                     _id: { $dateToString: { format: '%Y-%m-%d', date: completedDate, timezone: TZ } },
                     completed: { $sum: 1 },
                     revenue: { $sum: '$fare' },
+                    commission: { $sum: commission },
+                    discount: { $sum: discount },
+                    driverEarnings: { $sum: driverEarning },
                     distance: { $sum: { $ifNull: [ '$distance', 0 ] } },
                 }
             },
@@ -110,7 +122,7 @@ module.exports.buildReport = async ({ start, end }) => {
         ]),
         rideModel.aggregate([
             { $match: { ...completedInRange, captain: { $ne: null } } },
-            { $group: { _id: '$captain', rides: { $sum: 1 }, revenue: { $sum: '$fare' } } },
+            { $group: { _id: '$captain', rides: { $sum: 1 }, revenue: { $sum: driverEarning } } },
             { $sort: { revenue: -1 } },
             { $limit: 10 },
             { $lookup: { from: 'captains', localField: '_id', foreignField: '_id', as: 'captain' } },
@@ -146,6 +158,8 @@ module.exports.buildReport = async ({ start, end }) => {
             rides: createdMap[ date ] || 0,
             completed: completedMap[ date ]?.completed || 0,
             revenue: completedMap[ date ]?.revenue || 0,
+            commission: completedMap[ date ]?.commission || 0,
+            discount: completedMap[ date ]?.discount || 0,
         });
     }
 
@@ -154,6 +168,9 @@ module.exports.buildReport = async ({ start, end }) => {
 
     const revenue = completedByDay.reduce((sum, d) => sum + d.revenue, 0);
     const completed = completedByDay.reduce((sum, d) => sum + d.completed, 0);
+    const commissionTotal = completedByDay.reduce((sum, d) => sum + d.commission, 0);
+    const discountTotal = completedByDay.reduce((sum, d) => sum + d.discount, 0);
+    const driverEarningsTotal = completedByDay.reduce((sum, d) => sum + d.driverEarnings, 0);
     const distanceMeters = completedByDay.reduce((sum, d) => sum + d.distance, 0);
     const finished = statusCounts.completed + statusCounts.cancelled;
 
@@ -165,6 +182,9 @@ module.exports.buildReport = async ({ start, end }) => {
             ridesCancelled: statusCounts.cancelled,
             revenue,
             averageFare: completed ? Math.round(revenue / completed) : 0,
+            commission: commissionTotal,
+            discount: discountTotal,
+            driverEarnings: driverEarningsTotal,
             totalDistanceKm: Math.round(distanceMeters / 100) / 10,
             completionRate: finished ? Math.round((statusCounts.completed / finished) * 100) : null,
             newUsers,

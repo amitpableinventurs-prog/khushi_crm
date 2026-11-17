@@ -24,6 +24,9 @@ const MENU = [
     items: [
       { to: '/admin/reports', label: 'Reports', icon: 'ri-file-chart-line' },
       { to: '/admin/fares', label: 'Fare settings', icon: 'ri-money-rupee-circle-line' },
+      { to: '/admin/commission', label: 'Commission', icon: 'ri-percent-line' },
+      { to: '/admin/offers', label: 'Offers', icon: 'ri-gift-line' },
+      { to: '/admin/coupons', label: 'Coupons', icon: 'ri-coupon-3-line' },
     ],
   },
   {

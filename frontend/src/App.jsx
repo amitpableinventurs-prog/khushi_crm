@@ -32,6 +32,8 @@ import AdminRiders from './admin/pages/Riders'
 import AdminRiderDetail from './admin/pages/RiderDetail'
 import AdminReports from './admin/pages/Reports'
 import AdminFareSettings from './admin/pages/FareSettings'
+import AdminCommission from './admin/pages/Commission'
+import AdminPromos from './admin/pages/Promos'
 import AdminAdmins from './admin/pages/Admins'
 import AdminAccount from './admin/pages/Account'
 import AdminIntegrations from './admin/pages/Integrations'
@@ -141,6 +143,9 @@ const App = () => {
           <Route path='riders/:id' element={<AdminRiderDetail />} />
           <Route path='reports' element={<AdminReports />} />
           <Route path='fares' element={<AdminFareSettings />} />
+          <Route path='commission' element={<AdminCommission />} />
+          <Route path='offers' element={<AdminPromos key='offer' kind='offer' />} />
+          <Route path='coupons' element={<AdminPromos key='coupon' kind='coupon' />} />
           <Route path='integrations' element={<AdminIntegrations />} />
           <Route path='notifications' element={<AdminNotifications />} />
           <Route path='admins' element={<AdminAdmins />} />

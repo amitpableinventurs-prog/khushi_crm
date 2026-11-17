@@ -5,6 +5,8 @@ const rideController = require('../controllers/ride.controller');
 const authMiddleware = require('../middlewares/auth.middleware');
 const { VEHICLE_TYPES, VEHICLE_BY_KEY, GOODS_TYPES, MAX_HELPERS } = require('../config/vehicles');
 
+const couponBody = body('couponCode').optional({ values: 'falsy' }).isString().trim().isLength({ max: 30 }).withMessage('Coupon code is too long');
+
 
 router.post('/create',
     authMiddleware.authUser,
@@ -24,7 +26,23 @@ router.post('/create',
     body('receiverPhone').matches(/^\+?[\d\s-]{10,16}$/).withMessage('Receiver phone must be 10 digits, or include the country code like +91...'),
     body('helpers').optional().isInt({ min: 0, max: MAX_HELPERS }).withMessage(`Helpers must be 0 to ${MAX_HELPERS}`),
     body('notes').optional().isString().isLength({ max: 300 }).withMessage('Notes are too long'),
+    couponBody,
     rideController.createRide
+)
+
+router.post('/quote',
+    authMiddleware.authUser,
+    body('pickup').isString().isLength({ min: 3 }).withMessage('Invalid pickup address'),
+    body('destination').isString().isLength({ min: 3 }).withMessage('Invalid destination address'),
+    body('vehicleType').isString().isIn(VEHICLE_TYPES).withMessage('Invalid vehicle type'),
+    body('helpers').optional().isInt({ min: 0, max: MAX_HELPERS }).withMessage(`Helpers must be 0 to ${MAX_HELPERS}`),
+    couponBody,
+    rideController.getQuote
+)
+
+router.get('/offers',
+    authMiddleware.authUser,
+    rideController.listOffers
 )
 
 router.get('/get-fare',

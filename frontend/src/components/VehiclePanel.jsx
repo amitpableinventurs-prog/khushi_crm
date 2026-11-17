@@ -2,6 +2,8 @@ import React from 'react'
 import { VEHICLES, formatCapacity } from '../vehicles'
 
 const VehiclePanel = (props) => {
+    // Best automatic offer per vehicle, from /rides/get-fare
+    const offers = props.fare?.offers || {}
     return (
         <div>
             <h5
@@ -34,12 +36,26 @@ const VehiclePanel = (props) => {
                                 </span>
                             </h4>
                             <p className='text-xs text-gray-500'>{v.desc}</p>
+                            {offers[v.key] && (
+                                <p className='text-[11px] font-semibold text-green-700 mt-0.5 truncate'>
+                                    <i className='ri-price-tag-3-fill'></i> {offers[v.key].title} · ₹{offers[v.key].discount} off
+                                </p>
+                            )}
                         </div>
                         <div className='text-right pl-2'>
-                            <h2 className='text-lg font-bold text-gray-900'>
-                                {props.fare && props.fare[v.key] ? `₹${props.fare[v.key]}` : '₹--'}
-                            </h2>
-                            <p className='text-xs text-gray-400'>Estimate</p>
+                            {offers[v.key] && props.fare?.[v.key] ? (
+                                <>
+                                    <p className='text-xs text-gray-400 line-through'>₹{props.fare[v.key]}</p>
+                                    <h2 className='text-lg font-bold text-green-700'>₹{props.fare[v.key] - offers[v.key].discount}</h2>
+                                </>
+                            ) : (
+                                <>
+                                    <h2 className='text-lg font-bold text-gray-900'>
+                                        {props.fare && props.fare[v.key] ? `₹${props.fare[v.key]}` : '₹--'}
+                                    </h2>
+                                    <p className='text-xs text-gray-400'>Estimate</p>
+                                </>
+                            )}
                         </div>
                     </div>
                 ))}

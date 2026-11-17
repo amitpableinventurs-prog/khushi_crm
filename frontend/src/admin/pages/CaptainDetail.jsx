@@ -164,8 +164,8 @@ const CaptainDetail = () => {
       <SuccessBanner>{notice}</SuccessBanner>
 
       <div className='grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4'>
-        <StatTile label='Total earnings' value={formatMoney(stats.totalFare)} hint={`${plural(stats.completedRides, "completed order")}`} />
-        <StatTile label="Today's earnings" value={formatMoney(stats.todayFare)} hint={`${plural(stats.todayRides, "order")} today`} />
+        <StatTile label='Total earnings' value={formatMoney(stats.totalEarning)} hint={`${plural(stats.completedRides, "completed order")} · ${formatMoney(stats.totalCommission)} commission`} />
+        <StatTile label="Today's earnings" value={formatMoney(stats.todayEarning)} hint={`${plural(stats.todayRides, "order")} today`} />
         <StatTile label='Average fare' value={formatMoney(stats.completedRides ? stats.totalFare / stats.completedRides : 0)} />
         <StatTile label='Cancelled orders' value={stats.cancelledRides} hint={`of ${stats.totalRides} assigned`} />
       </div>

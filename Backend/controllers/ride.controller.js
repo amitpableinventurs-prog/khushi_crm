@@ -5,6 +5,7 @@ const { sendMessageToSocketId } = require('../socket');
 const rideModel = require('../models/ride.model');
 const captainModel = require('../models/captain.model');
 const notificationService = require('../services/notification.service');
+const pricingService = require('../services/pricing.service');
 
 module.exports.createRide = async (req, res) => {
     const errors = validationResult(req);
@@ -12,12 +13,12 @@ module.exports.createRide = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { pickup, destination, vehicleType, goodsType, goodsWeight, receiverName, receiverPhone, helpers, notes } = req.body;
+    const { pickup, destination, vehicleType, goodsType, goodsWeight, receiverName, receiverPhone, helpers, notes, couponCode } = req.body;
 
     try {
         const ride = await rideService.createRide({
             user: req.user._id, pickup, destination, vehicleType,
-            goodsType, goodsWeight, receiverName, receiverPhone, helpers, notes
+            goodsType, goodsWeight, receiverName, receiverPhone, helpers, notes, couponCode
         });
         res.status(201).json(ride);
 
@@ -41,7 +42,7 @@ module.exports.createRide = async (req, res) => {
     } catch (err) {
         console.error("createRide error:", err);
         if (!res.headersSent) {
-            return res.status(500).json({ message: err.message });
+            return res.status(err.status || 500).json({ message: err.message });
         }
     }
 };
@@ -54,7 +55,35 @@ module.exports.getFare = async (req, res) => {
     const { pickup, destination } = req.query;
     try {
         const fare = await rideService.getFare(pickup, destination);
+        // Best automatic offer per vehicle (without helpers), shown on the vehicle list
+        const vehicleFares = Object.fromEntries(Object.entries(fare).filter(([ key ]) => key !== 'helperCharge'));
+        fare.offers = await pricingService.offersForFares({ userId: req.user._id, fares: vehicleFares });
         return res.status(200).json(fare);
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+};
+
+// Price breakdown for the confirm screen: helpers, best offer or entered coupon
+module.exports.getQuote = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+    const { pickup, destination, vehicleType, helpers, couponCode } = req.body;
+    try {
+        const quote = await rideService.quoteRide({ user: req.user._id, pickup, destination, vehicleType, helpers, couponCode });
+        // Commission is internal; the customer only sees what they pay
+        const { commission, commissionPercent, commissionRule, driverEarning, ...forCustomer } = quote;
+        return res.status(200).json(forCustomer);
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+};
+
+module.exports.listOffers = async (req, res) => {
+    try {
+        return res.status(200).json(await pricingService.listForCustomers());
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
@@ -137,8 +166,10 @@ module.exports.getCaptainStats = async (req, res) => {
             return new Date(rideDate) >= todayStart;
         });
 
-        const todayEarnings = todayRides.reduce((sum, r) => sum + (r.fare || 0), 0);
-        const totalEarnings = completedRides.reduce((sum, r) => sum + (r.fare || 0), 0);
+        // Driver's share after platform commission (older orders without commission count in full)
+        const earning = (r) => r.driverEarning ?? r.fare ?? 0;
+        const todayEarnings = todayRides.reduce((sum, r) => sum + earning(r), 0);
+        const totalEarnings = completedRides.reduce((sum, r) => sum + earning(r), 0);
 
         console.log(`[Stats] Captain ${captainId}: todayRides=${todayRides.length}, todayEarnings=${todayEarnings}, totalRides=${allRides.length}, totalEarnings=${totalEarnings}`);
 

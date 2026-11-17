@@ -22,7 +22,7 @@ const Reports = () => {
   const [ exportError, setExportError ] = useState('')
 
   const exportSummary = () => {
-    const rows = [ [ 'Date', 'Orders requested', 'Orders completed', 'Revenue (INR)' ], ...data.daily.map(d => [ d.date, d.rides, d.completed, d.revenue ]) ]
+    const rows = [ [ 'Date', 'Orders requested', 'Orders completed', 'Revenue (INR)', 'Commission (INR)', 'Discounts (INR)' ], ...data.daily.map(d => [ d.date, d.rides, d.completed, d.revenue, d.commission, d.discount ]) ]
     const blob = new Blob([ '﻿' + toCsv(rows) ], { type: 'text/csv;charset=utf-8' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
@@ -84,13 +84,13 @@ const Reports = () => {
         <div className={isLoading ? 'opacity-70 transition-opacity' : 'transition-opacity'}>
           <div className='grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4'>
             <StatTile label='Revenue' value={formatMoney(s.revenue)} hint={`Avg fare ${formatMoney(s.averageFare)}`} />
+            <StatTile label='Commission earned' value={formatMoney(s.commission)} hint={s.revenue ? `${Math.round(s.commission / s.revenue * 1000) / 10}% of revenue` : 'Platform share'} />
+            <StatTile label='Paid to drivers' value={formatMoney(s.driverEarnings)} hint='Revenue minus commission' />
+            <StatTile label='Discounts given' value={formatMoney(s.discount)} hint='Offers and coupons' />
             <StatTile label='Completed orders' value={formatNumber(s.ridesCompleted)} hint={`${formatNumber(s.totalDistanceKm)} km driven`} />
-            <StatTile label='Order requests' value={formatNumber(s.ridesRequested)} hint={`${s.ridesCancelled} cancelled`} />
+            <StatTile label='Order requests' value={formatNumber(s.ridesRequested)} hint={`${s.ridesCancelled} cancelled (${data.cancellations.user || 0} customer, ${data.cancellations.admin || 0} admin)`} />
             <StatTile label='Completion rate' value={s.completionRate === null ? '—' : `${s.completionRate}%`} hint='Completed ÷ (completed + cancelled)' />
-            <StatTile label='New customers' value={formatNumber(s.newUsers)} />
-            <StatTile label='New drivers' value={formatNumber(s.newCaptains)} />
-            <StatTile label='Cancelled by customers' value={formatNumber(data.cancellations.user || 0)} />
-            <StatTile label='Cancelled by admin' value={formatNumber(data.cancellations.admin || 0)} />
+            <StatTile label='New customers' value={formatNumber(s.newUsers)} hint={`${formatNumber(s.newCaptains)} new drivers`} />
           </div>
 
           <div className='grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4'>

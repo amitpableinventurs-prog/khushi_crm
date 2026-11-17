@@ -2,6 +2,7 @@ const adminModel = require('../models/admin.model');
 const userModel = require('../models/user.model');
 const captainModel = require('../models/captain.model');
 const rideModel = require('../models/ride.model');
+const promoModel = require('../models/promo.model');
 const blackListTokenModel = require('../models/blackListToken.model');
 const adminService = require('../services/admin.service');
 const settingService = require('../services/setting.service');
@@ -242,7 +243,7 @@ module.exports.exportRides = handle(async (req, res) => {
     const filter = await buildRideFilter(req.query);
     const rides = await populateRide(rideModel.find(filter).sort({ createdAt: -1 }).limit(5000));
 
-    const header = [ 'Order ID', 'Created', 'Completed', 'Status', 'Vehicle', 'Customer', 'Customer email', 'Driver', 'Driver email', 'Plate', 'Pickup', 'Drop', 'Goods', 'Weight (kg)', 'Helpers', 'Receiver', 'Receiver phone', 'Distance (km)', 'Duration (min)', 'Fare (INR)', 'Payment method', 'Payment status', 'Razorpay payment ID', 'Cancelled by', 'Cancel reason' ];
+    const header = [ 'Order ID', 'Created', 'Completed', 'Status', 'Vehicle', 'Customer', 'Customer email', 'Driver', 'Driver email', 'Plate', 'Pickup', 'Drop', 'Goods', 'Weight (kg)', 'Helpers', 'Receiver', 'Receiver phone', 'Distance (km)', 'Duration (min)', 'Fare before discount (INR)', 'Discount (INR)', 'Offer / coupon', 'Fare (INR)', 'Commission %', 'Commission (INR)', 'Driver earning (INR)', 'Payment method', 'Payment status', 'Razorpay payment ID', 'Cancelled by', 'Cancel reason' ];
     const rows = rides.map(r => [
         r._id,
         r.createdAt?.toISOString(),
@@ -263,7 +264,13 @@ module.exports.exportRides = handle(async (req, res) => {
         r.receiverPhone,
         r.distance ? (r.distance / 1000).toFixed(1) : '',
         r.duration ? Math.round(r.duration / 60) : '',
+        r.fareBeforeDiscount ?? r.fare,
+        r.discount || 0,
+        r.couponCode || r.promoTitle,
         r.fare,
+        r.commissionPercent,
+        r.commission,
+        r.driverEarning ?? r.fare,
         r.paymentMethod,
         r.paymentStatus,
         r.paymentID,
@@ -728,4 +735,123 @@ module.exports.listNotificationLog = handle(async (req, res) => {
 
 module.exports.sendTestNotification = handle(async (req, res) => {
     res.status(200).json(await notificationService.sendTest(req.body.channel, req.body.to, req.admin.fullname || req.admin.email));
+});
+
+// ---------- Commission (by time slot) ----------
+
+module.exports.getCommissionSettings = handle(async (req, res) => {
+    res.status(200).json(await settingService.getCommissionSettings());
+});
+
+module.exports.updateCommissionSettings = handle(async (req, res) => {
+    const list = (value) => Array.isArray(value) ? value : [];
+    const value = {
+        defaultPercent: Number(req.body.defaultPercent),
+        slots: list(req.body.slots).map(slot => ({
+            name: String(slot.name).trim(),
+            start: slot.start,
+            end: slot.end,
+            days: [ ...new Set(list(slot.days).map(Number)) ].sort(),
+            vehicleTypes: [ ...new Set(list(slot.vehicleTypes)) ],
+            percent: Number(slot.percent),
+        })),
+    };
+    res.status(200).json(await settingService.updateCommissionSettings(value));
+});
+
+// ---------- Offers & coupons ----------
+
+// 'YYYY-MM-DD' in India time -> start or end of that day
+const indiaDay = (day, end) => day ? new Date(`${day}T${end ? '23:59:59.999' : '00:00:00'}+05:30`) : undefined;
+const optionalNumber = (value) => value === '' || value === null || value === undefined ? undefined : Number(value);
+
+const promoFields = (body) => ({
+    title: body.title.trim(),
+    description: body.description?.trim() || undefined,
+    discountType: body.discountType,
+    value: Number(body.value),
+    maxDiscount: body.discountType === 'percent' ? optionalNumber(body.maxDiscount) : undefined,
+    minFare: optionalNumber(body.minFare) || 0,
+    vehicleTypes: Array.isArray(body.vehicleTypes) ? [ ...new Set(body.vehicleTypes) ] : [],
+    days: Array.isArray(body.days) ? [ ...new Set(body.days.map(Number)) ].sort() : [],
+    startTime: body.startTime || undefined,
+    endTime: body.endTime || undefined,
+    validFrom: indiaDay(body.validFrom, false),
+    validTo: indiaDay(body.validTo, true),
+    usageLimit: optionalNumber(body.usageLimit),
+    perUserLimit: optionalNumber(body.perUserLimit),
+    firstOrderOnly: Boolean(body.firstOrderOnly),
+    showToCustomers: body.showToCustomers === undefined ? true : Boolean(body.showToCustomers),
+    isActive: body.isActive === undefined ? true : Boolean(body.isActive),
+});
+
+const duplicateCode = (err, res) => {
+    if (err?.code === 11000) {
+        res.status(400).json({ message: 'A coupon with this code already exists' });
+        return true;
+    }
+    return false;
+}
+
+// Orders that used each promo (cancelled orders don't count) and the discount given
+const promoUsage = async (ids) => {
+    const rows = await rideModel.aggregate([
+        { $match: { promoId: { $in: ids }, status: { $ne: 'cancelled' } } },
+        { $group: { _id: '$promoId', orders: { $sum: 1 }, discount: { $sum: { $ifNull: [ '$discount', 0 ] } } } },
+    ]);
+    return Object.fromEntries(rows.map(r => [ String(r._id), { orders: r.orders, discount: r.discount } ]));
+}
+
+const withUsage = async (promo) => {
+    const usage = await promoUsage([ promo._id ]);
+    return { ...promo.toObject(), usage: usage[ String(promo._id) ] || { orders: 0, discount: 0 } };
+}
+
+module.exports.listPromos = handle(async (req, res) => {
+    const promos = await promoModel.find({ kind: req.query.kind }).sort({ isActive: -1, createdAt: -1 }).lean();
+    const usage = await promoUsage(promos.map(p => p._id));
+    res.status(200).json(promos.map(p => ({ ...p, usage: usage[ String(p._id) ] || { orders: 0, discount: 0 } })));
+});
+
+module.exports.createPromo = handle(async (req, res) => {
+    const kind = req.body.kind;
+    try {
+        const promo = await promoModel.create({
+            kind,
+            ...promoFields(req.body),
+            code: kind === 'coupon' ? req.body.code.trim().toUpperCase() : undefined,
+        });
+        res.status(201).json(await withUsage(promo));
+    } catch (err) {
+        if (!duplicateCode(err, res)) throw err;
+    }
+});
+
+module.exports.updatePromo = handle(async (req, res) => {
+    const promo = await promoModel.findById(req.params.id);
+    if (!promo) {
+        return res.status(404).json({ message: 'Offer or coupon not found' });
+    }
+    const fields = promoFields(req.body);
+    if (promo.kind === 'coupon') {
+        if (!req.body.code) return res.status(400).json({ message: 'Coupon code is required' });
+        fields.code = req.body.code.trim().toUpperCase();
+    }
+    Object.entries(fields).forEach(([ key, value ]) => promo.set(key, value));
+    try {
+        await promo.save();
+    } catch (err) {
+        if (duplicateCode(err, res)) return;
+        throw err;
+    }
+    res.status(200).json(await withUsage(promo));
+});
+
+module.exports.deletePromo = handle(async (req, res) => {
+    const promo = await promoModel.findByIdAndDelete(req.params.id);
+    if (!promo) {
+        return res.status(404).json({ message: 'Offer or coupon not found' });
+    }
+    // Orders keep their own copy of the discount, title and code
+    res.status(200).json({ message: 'Deleted' });
 });

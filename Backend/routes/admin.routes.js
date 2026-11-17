@@ -119,6 +119,58 @@ router.put('/settings/fares', authAdmin, [
     ]),
 ], adminController.updateFareSettings)
 
+// Commission by time slot
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+router.get('/settings/commission', authAdmin, adminController.getCommissionSettings)
+router.put('/settings/commission', authAdmin, [
+    body('defaultPercent').isFloat({ min: 0, max: 100 }).withMessage('Default commission must be 0–100%'),
+    body('slots').isArray({ max: 20 }).withMessage('Up to 20 time slots'),
+    body('slots.*.name').isString().trim().isLength({ min: 1, max: 40 }).withMessage('Each time slot needs a name (up to 40 characters)'),
+    body('slots.*.start').matches(HHMM).withMessage('Slot start time must look like 08:00'),
+    body('slots.*.end').matches(HHMM).withMessage('Slot end time must look like 22:00'),
+    body('slots.*.percent').isFloat({ min: 0, max: 100 }).withMessage('Slot commission must be 0–100%'),
+    body('slots.*.days').optional().isArray().withMessage('Days must be a list'),
+    body('slots.*.days.*').isInt({ min: 0, max: 6 }).withMessage('Invalid day'),
+    body('slots.*.vehicleTypes').optional().isArray().withMessage('Vehicle types must be a list'),
+    body('slots.*.vehicleTypes.*').isIn(VEHICLE_TYPES).withMessage('Invalid vehicle type'),
+], adminController.updateCommissionSettings)
+
+// Offers (automatic) and coupons (code)
+const optionalField = (field) => body(field).optional({ values: 'falsy' });
+const promoCode = (chain) => chain.isString().trim().matches(/^[A-Za-z0-9_-]{3,20}$/).withMessage('Code must be 3–20 letters, numbers, - or _');
+const promoBody = [
+    body('title').isString().trim().isLength({ min: 2, max: 80 }).withMessage('Title must be 2–80 characters'),
+    optionalField('description').isString().isLength({ max: 300 }).withMessage('Description is too long'),
+    body('discountType').isIn([ 'percent', 'flat' ]).withMessage('Discount type must be percent or flat'),
+    body('value').isFloat({ gt: 0, max: 100000 }).withMessage('Discount must be more than 0').bail()
+        .custom((value, { req }) => req.body.discountType !== 'percent' || Number(value) <= 100).withMessage('Percent discount can be at most 100%'),
+    optionalField('maxDiscount').isFloat({ gt: 0 }).withMessage('Max discount must be more than 0'),
+    optionalField('minFare').isFloat({ min: 0 }).withMessage('Minimum order must be 0 or more'),
+    body('vehicleTypes').optional().isArray().withMessage('Vehicle types must be a list'),
+    body('vehicleTypes.*').isIn(VEHICLE_TYPES).withMessage('Invalid vehicle type'),
+    body('days').optional().isArray().withMessage('Days must be a list'),
+    body('days.*').isInt({ min: 0, max: 6 }).withMessage('Invalid day'),
+    optionalField('startTime').matches(HHMM).withMessage('Start time must look like 08:00'),
+    optionalField('endTime').matches(HHMM).withMessage('End time must look like 22:00'),
+    body('endTime').custom((end, { req }) => Boolean(end) === Boolean(req.body.startTime)).withMessage('Give both a start and an end time, or neither'),
+    optionalField('validFrom').isDate({ format: 'YYYY-MM-DD' }).withMessage('Invalid start date'),
+    optionalField('validTo').isDate({ format: 'YYYY-MM-DD' }).withMessage('Invalid end date').bail()
+        .custom((to, { req }) => !req.body.validFrom || to >= req.body.validFrom).withMessage('End date must be on or after the start date'),
+    optionalField('usageLimit').isInt({ min: 1 }).withMessage('Total uses must be at least 1'),
+    optionalField('perUserLimit').isInt({ min: 1 }).withMessage('Uses per customer must be at least 1'),
+    body('firstOrderOnly').optional().isBoolean().withMessage('"firstOrderOnly" must be true or false'),
+    body('showToCustomers').optional().isBoolean().withMessage('"showToCustomers" must be true or false'),
+    body('isActive').optional().isBoolean().withMessage('"isActive" must be true or false'),
+];
+router.get('/promos', authAdmin, query('kind').isIn([ 'offer', 'coupon' ]).withMessage('kind must be offer or coupon'), adminController.listPromos)
+router.post('/promos', authAdmin, [
+    body('kind').isIn([ 'offer', 'coupon' ]).withMessage('kind must be offer or coupon'),
+    promoCode(body('code').if(body('kind').equals('coupon'))),
+    ...promoBody,
+], adminController.createPromo)
+router.put('/promos/:id', authAdmin, [ validId, promoCode(body('code').optional({ values: 'falsy' })), ...promoBody ], adminController.updatePromo)
+router.delete('/promos/:id', authAdmin, validId, adminController.deletePromo)
+
 // Third-party integrations (Google Maps, OpenStreetMap, SMTP email)
 const integrationName = param('name').isIn(NAMES).withMessage('Unknown integration');
 const integrationFields = (prefix = '') => [

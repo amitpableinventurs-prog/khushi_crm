@@ -27,3 +27,18 @@ module.exports.updateFareSettings = async (fares) => {
     );
     return module.exports.getFareSettings();
 }
+
+// ---------- Platform commission ----------
+// { defaultPercent, slots: [ { name, start: 'HH:MM', end: 'HH:MM', days: [0-6], vehicleTypes: [], percent } ] }
+// The first slot that matches the booking time (India time) wins; otherwise defaultPercent.
+const DEFAULT_COMMISSION = { defaultPercent: 10, slots: [] };
+
+module.exports.getCommissionSettings = async () => {
+    const setting = await settingModel.findOne({ key: 'commission' }).lean();
+    return { ...DEFAULT_COMMISSION, ...setting?.value };
+}
+
+module.exports.updateCommissionSettings = async (value) => {
+    await settingModel.findOneAndUpdate({ key: 'commission' }, { value }, { upsert: true });
+    return module.exports.getCommissionSettings();
+}

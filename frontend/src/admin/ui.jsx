@@ -238,3 +238,43 @@ export const PaymentBadge = ({ ride }) => {
     </span>
   )
 }
+
+// Multi-select as toggle chips; an empty selection is shown with `emptyLabel` (e.g. "Every day")
+export const ChipGroup = ({ label, options, value, onChange, emptyLabel }) => {
+  const toggle = (key) => onChange(value.includes(key) ? value.filter(v => v !== key) : [ ...value, key ])
+  return (
+    <div className='flex flex-col gap-1.5 text-sm'>
+      {label && (
+        <span className='text-xs font-medium text-[#c3c2b7]'>
+          {label}{emptyLabel && !value.length && <span className='text-[#898781]'> · {emptyLabel}</span>}
+        </span>
+      )}
+      <div className='flex flex-wrap gap-1.5' role='group' aria-label={label}>
+        {options.map(o => {
+          const on = value.includes(o.value)
+          return (
+            <button
+              key={o.value}
+              type='button'
+              aria-pressed={on}
+              onClick={() => toggle(o.value)}
+              className={`h-8 px-2.5 rounded-lg text-xs font-medium border transition-colors ${on ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-100' : 'bg-white/5 border-white/10 text-[#c3c2b7] hover:text-white'}`}
+            >
+              {on && <i className='ri-check-line mr-0.5'></i>}{o.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+export const Toggle = ({ label, checked, onChange, hint }) => (
+  <label className='flex items-start gap-3 text-sm cursor-pointer'>
+    <input type='checkbox' checked={checked} onChange={e => onChange(e.target.checked)} className='mt-0.5 h-4 w-4 accent-emerald-500' />
+    <span>
+      <span className='text-[#f0efec]'>{label}</span>
+      {hint && <span className='block text-xs text-[#898781]'>{hint}</span>}
+    </span>
+  </label>
+)

@@ -11,6 +11,40 @@ const STEPS = [
   { status: 'completed', label: 'Completed', icon: 'ri-checkbox-circle-line' },
 ]
 
+const Row = ({ label, value, sub, strong, tone = '' }) => (
+  <div className={`flex justify-between gap-3 ${strong ? 'font-semibold text-[#f0efec]' : 'text-[#c3c2b7]'}`}>
+    <span>{label}{sub && <span className='block text-xs text-[#898781] font-normal'>{sub}</span>}</span>
+    <span className={`tabular-nums whitespace-nowrap ${tone}`}>{value}</span>
+  </div>
+)
+
+// Older orders were placed before discounts and commission existed: the driver kept the whole fare
+const PriceBreakdown = ({ ride }) => {
+  const before = ride.fareBeforeDiscount ?? ride.fare
+  const hasSplit = ride.commission !== undefined && ride.commission !== null
+  return (
+    <div className='space-y-2 text-sm'>
+      <Row label='Vehicle fare' value={formatMoney(before - (ride.helperCharge || 0))} />
+      {ride.helperCharge > 0 && <Row label={`Loading helpers × ${ride.helpers}`} value={formatMoney(ride.helperCharge)} />}
+      {ride.discount > 0 && (
+        <Row
+          label={ride.promoKind === 'coupon' ? `Coupon ${ride.couponCode}` : 'Offer'}
+          sub={ride.promoTitle}
+          value={`− ${formatMoney(ride.discount)}`}
+          tone='text-emerald-300'
+        />
+      )}
+      <div className='border-t border-white/10 pt-2'><Row label='Customer pays' value={formatMoney(ride.fare)} strong /></div>
+      {hasSplit ? (
+        <>
+          <Row label={`Commission (${ride.commissionPercent}%)`} sub={ride.commissionRule === 'Default' ? 'Default rate' : `Time slot: ${ride.commissionRule}`} value={formatMoney(ride.commission)} />
+          <Row label='Driver earning' value={formatMoney(ride.driverEarning)} strong />
+        </>
+      ) : <p className='text-xs text-[#898781]'>Placed before commission was set up, so the driver keeps the full fare.</p>}
+    </div>
+  )
+}
+
 const RideDetail = () => {
   const { id } = useParams()
   const { data: ride, setData, error } = useAdminData(`/rides/${id}`)
@@ -86,7 +120,6 @@ const RideDetail = () => {
               </div>
             </div>
             <DetailList items={[
-              [ 'Fare', ride.helperCharge ? `${formatMoney(ride.fare)} (includes ${formatMoney(ride.helperCharge)} for helpers)` : formatMoney(ride.fare) ],
               [ 'Vehicle type', VEHICLE_LABELS[ ride.vehicleType ] || 'Not recorded' ],
               [ 'Distance', formatDistance(ride.distance) ],
               [ 'Estimated duration', formatDuration(ride.duration) ],
@@ -133,6 +166,9 @@ const RideDetail = () => {
         </div>
 
         <div className='space-y-4'>
+          <Card title='Price breakdown'>
+            <PriceBreakdown ride={ride} />
+          </Card>
           <Card
             title='Payment'
             actions={canRefund && <Button variant='danger' icon='ri-refund-2-line' onClick={() => { setActionError(''); setShowRefund(true) }}>Refund</Button>}

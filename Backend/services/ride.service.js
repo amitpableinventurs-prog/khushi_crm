@@ -2,6 +2,7 @@ const rideModel = require('../models/ride.model');
 const mapService = require('./maps.service');
 const settingService = require('./setting.service');
 const paymentService = require('./payment.service');
+const pricingService = require('./pricing.service');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 
@@ -42,25 +43,53 @@ function getOtp(num) {
 }
 
 
+// Price breakdown for one vehicle: fare, helpers, best offer or coupon, commission
+async function quoteRide({ user, pickup, destination, vehicleType, helpers = 0, couponCode }) {
+    const fare = await getFare(pickup, destination);
+    const helperCount = Number(helpers) || 0;
+    const helperCharge = helperCount * fare.helperCharge;
+    const quote = await pricingService.quote({
+        userId: user,
+        vehicleType,
+        amount: fare[ vehicleType ] + helperCharge,
+        couponCode,
+    });
+    return { ...quote, vehicleFare: fare[ vehicleType ], helpers: helperCount, helperCharge };
+}
+
+module.exports.quoteRide = quoteRide;
+
 module.exports.createRide = async ({
     user, pickup, destination, vehicleType,
-    goodsType, goodsWeight, receiverName, receiverPhone, helpers = 0, notes
+    goodsType, goodsWeight, receiverName, receiverPhone, helpers = 0, notes, couponCode
 }) => {
     if (!user || !pickup || !destination || !vehicleType) {
         throw new Error('All fields are required');
     }
 
     const distanceTime = await mapService.getDistanceTime(pickup, destination);
-    const fare = await getFare(pickup, destination);
-    const helperCount = Number(helpers) || 0;
-    const helperCharge = helperCount * fare.helperCharge;
+    const quote = await quoteRide({ user, pickup, destination, vehicleType, helpers, couponCode });
+    if (quote.couponError) {
+        throw Object.assign(new Error(quote.couponError), { status: 400 });
+    }
+    const { helpers: helperCount, helperCharge } = quote;
 
     const ride = rideModel.create({
         user,
         pickup,
         destination,
         otp: getOtp(6),
-        fare: fare[ vehicleType ] + helperCharge,
+        fare: quote.fare,
+        fareBeforeDiscount: quote.fareBeforeDiscount,
+        discount: quote.discount,
+        promoId: quote.promo?.id,
+        promoKind: quote.promo?.kind,
+        promoTitle: quote.promo?.title,
+        couponCode: quote.promo?.kind === 'coupon' ? quote.promo.code : undefined,
+        commissionPercent: quote.commissionPercent,
+        commissionRule: quote.commissionRule,
+        commission: quote.commission,
+        driverEarning: quote.driverEarning,
         vehicleType,
         goodsType,
         goodsWeight: goodsWeight ? Number(goodsWeight) : undefined,

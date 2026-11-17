@@ -69,6 +69,9 @@ const RidePopUp = (props) => {
                     <div>
                         <p className='text-xs text-gray-400'>Fare</p>
                         <p className='font-bold text-gray-800'>₹{props.ride?.fare} · Cash</p>
+                        {props.ride?.driverEarning !== undefined && (
+                            <p className='text-xs text-green-700 font-semibold'>You earn ₹{props.ride.driverEarning} <span className='text-gray-400 font-normal'>after {props.ride.commissionPercent}% commission</span></p>
+                        )}
                     </div>
                 </div>
             </div>

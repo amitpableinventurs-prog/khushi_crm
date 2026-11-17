@@ -41,6 +41,9 @@ const Home = () => {
     const [goods, setGoods] = useState(EMPTY_GOODS)
     const [isBooking, setIsBooking] = useState(false)
     const [bookingError, setBookingError] = useState('')
+    const [couponCode, setCouponCode] = useState('') // code the customer applied
+    const [quote, setQuote] = useState(null) // price breakdown from the server for the confirm screen
+    const [promos, setPromos] = useState([]) // offers and public coupons to show
 
     const navigate = useNavigate()
     const { socket } = useContext(SocketContext)
@@ -114,6 +117,31 @@ const Home = () => {
 
         return () => clearInterval(activePoll)
     }, [user, navigate])
+
+    // Offers and coupon codes the customer can use
+    useEffect(() => {
+        if (!user?._id) return
+        axios.get(`${import.meta.env.VITE_BASE_URL}/rides/offers`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }).then(res => setPromos(res.data || [])).catch(() => setPromos([]))
+    }, [user])
+
+    // Live price on the confirm screen: helpers, best offer, applied coupon
+    useEffect(() => {
+        if (!confirmRidePanel || !vehicleType || !pickup || !destination) return
+        let stale = false
+        const timer = setTimeout(async () => {
+            try {
+                const res = await axios.post(`${import.meta.env.VITE_BASE_URL}/rides/quote`, {
+                    pickup, destination, vehicleType, helpers: goods.helpers, couponCode: couponCode || undefined
+                }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+                if (!stale) setQuote(res.data)
+            } catch {
+                if (!stale) setQuote(null)
+            }
+        }, 200)
+        return () => { stale = true; clearTimeout(timer) }
+    }, [confirmRidePanel, vehicleType, pickup, destination, goods.helpers, couponCode])
 
     // Location search handlers (debounced for instant typing)
     const fetchSuggestions = async (input) => {
@@ -243,7 +271,9 @@ const Home = () => {
                 receiverName: goods.receiverName.trim(),
                 receiverPhone: goods.receiverPhone.trim(),
                 helpers: goods.helpers,
-                notes: goods.notes.trim() || undefined
+                notes: goods.notes.trim() || undefined,
+                // only a coupon the server accepted; a rejected code must not block the booking
+                couponCode: quote?.promo?.kind === 'coupon' ? couponCode : undefined
             }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             })
@@ -252,6 +282,8 @@ const Home = () => {
             setVehiclePanel(false)
             setVehicleFound(true)
             setGoods(EMPTY_GOODS)
+            setCouponCode('')
+            setQuote(null)
         } catch (err) {
             const data = err.response?.data
             setBookingError(data?.errors?.[0]?.msg || data?.message || 'Could not place the booking. Please try again.')
@@ -478,6 +510,10 @@ const Home = () => {
                     setGoods={setGoods}
                     isBooking={isBooking}
                     error={bookingError}
+                    quote={quote?.vehicleFare !== undefined ? quote : null}
+                    couponCode={couponCode}
+                    setCouponCode={setCouponCode}
+                    promos={promos}
                 />
             </div>
 

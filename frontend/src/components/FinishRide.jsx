@@ -73,6 +73,7 @@ const FinishRide = ({ ride, setFinishRidePanel, paymentReceived, paymentMethod =
                 <div className='text-right'>
                     <p className='text-xs text-gray-400'>Total fare</p>
                     <h5 className='text-xl font-black text-gray-900'>₹{ride?.fare}</h5>
+                    {ride?.driverEarning !== undefined && <p className='text-xs text-green-700 font-semibold'>You earn ₹{ride.driverEarning}</p>}
                 </div>
             </div>
 

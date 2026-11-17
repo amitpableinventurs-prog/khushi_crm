@@ -23,7 +23,21 @@ const rideSchema = new mongoose.Schema({
     fare: {
         type: Number,
         required: true,
-    },
+    }, // what the customer pays, after any discount
+
+    // Discount (an automatic offer or a coupon), fixed when the order is placed
+    fareBeforeDiscount: { type: Number },
+    discount: { type: Number, default: 0 },
+    promoId: { type: mongoose.Schema.Types.ObjectId, ref: 'promo' },
+    promoKind: { type: String, enum: [ 'offer', 'coupon' ] },
+    promoTitle: { type: String },
+    couponCode: { type: String },
+
+    // Platform commission on `fare`, using the rate for the booking time; the rest goes to the driver
+    commissionPercent: { type: Number },
+    commissionRule: { type: String }, // name of the matching time slot, or 'Default'
+    commission: { type: Number },
+    driverEarning: { type: Number },
 
     status: {
         type: String,
