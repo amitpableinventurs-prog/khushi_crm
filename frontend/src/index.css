@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Admin panel typography: Plus Jakarta Sans for text, Sora for headings */
+.admin-ui {
+  @apply font-admin antialiased;
+}
+
+.admin-ui :is(h1, h2, h3) {
+  @apply font-display;
+  letter-spacing: -0.01em;
+}
+
+/* keep numbers in tables and stat cards from shifting width */
+.admin-ui :is(table, [data-numeric]) {
+  font-variant-numeric: tabular-nums;
+}

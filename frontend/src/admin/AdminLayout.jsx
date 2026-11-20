@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import adminApi, { TOKEN_KEY } from './api'
 import { AdminDataContext } from './AdminProtectWrapper'
+import logo from '../assets/kcs-logo.webp'
 
 const MENU = [
   {
@@ -43,11 +44,9 @@ const MENU = [
 const Sidebar = ({ admin, onNavigate, onLogout }) => (
   <div className='flex flex-col h-full'>
     <div className='flex items-center gap-3 px-5 h-16 border-b border-white/10 shrink-0'>
-      <span className='h-9 w-9 shrink-0 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center'>
-        <i className='ri-shield-user-fill text-lg text-white'></i>
-      </span>
+      <img src={logo} alt='' className='h-10 w-10 shrink-0 rounded-xl bg-white object-contain p-0.5' />
       <div className='min-w-0'>
-        <p className='font-bold leading-tight text-white'>Khushi Transport</p>
+        <p className='font-display font-bold leading-tight text-white'>Khushi Transport</p>
         <p className='text-xs text-[#898781]'>Admin panel</p>
       </div>
     </div>
@@ -115,7 +114,7 @@ const AdminLayout = () => {
   }
 
   return (
-    <div className='min-h-screen bg-[#0d0d0d] text-[#f0efec] font-sans'>
+    <div className='admin-ui min-h-screen bg-[#0d0d0d] text-[#f0efec]'>
       {/* desktop sidebar */}
       <aside className='hidden lg:block fixed inset-y-0 left-0 w-64 bg-[#141413] border-r border-white/10'>
         <Sidebar admin={admin} onLogout={logout} />
@@ -136,7 +135,8 @@ const AdminLayout = () => {
           <button onClick={() => setMenuOpen(true)} className='p-2 -ml-2 rounded-lg hover:bg-white/10' aria-label='Open menu'>
             <i className='ri-menu-line text-xl'></i>
           </button>
-          <p className='font-semibold'>Admin panel</p>
+          <img src={logo} alt='' className='h-8 w-8 rounded-lg bg-white object-contain p-0.5' />
+          <p className='font-display font-semibold'>Khushi Transport <span className='font-admin font-normal text-[#898781]'>· Admin</span></p>
         </header>
 
         <main className='max-w-7xl mx-auto px-4 sm:px-6 py-6'>

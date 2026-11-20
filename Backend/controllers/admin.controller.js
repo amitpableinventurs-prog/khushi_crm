@@ -363,7 +363,8 @@ module.exports.getCaptainKycDocument = handle(async (req, res) => {
     }
 
     const captain = await captainModel.findById(req.params.id)
-        .select(`+kyc.documents.${documentType}.content +kyc.documents.${documentType}.contentType`)
+        // the parent path is select:false too, so it has to be selected along with its content
+        .select(`+kyc.documents.${documentType} +kyc.documents.${documentType}.content`)
     const document = captain?.kyc?.documents?.[ documentType ]
     if (!document?.content || !document.contentType) {
         return res.status(404).json({ message: 'KYC document not found.' })
@@ -378,7 +379,7 @@ module.exports.getCaptainKycDocument = handle(async (req, res) => {
 module.exports.reviewCaptainKyc = handle(async (req, res) => {
     const { status, reviewNote } = req.body
     const captain = await captainModel.findById(req.params.id)
-        .select('+kyc.documents.license.content +kyc.documents.identity.content')
+        .select('+kyc.documents.license +kyc.documents.license.content +kyc.documents.identity +kyc.documents.identity.content')
     if (!captain) return res.status(404).json({ message: 'Driver not found.' })
     if (status === 'rejected' && !reviewNote?.trim()) {
         return res.status(400).json({ message: 'Add a reason when rejecting KYC.' })

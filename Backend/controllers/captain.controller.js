@@ -123,7 +123,7 @@ module.exports.submitCaptainKyc = async (req, res) => {
     }
 
     const captain = await captainModel.findById(req.captain._id)
-        .select('+kyc.documents.license.content +kyc.documents.identity.content')
+        .select('+kyc.documents.license +kyc.documents.license.content +kyc.documents.identity +kyc.documents.identity.content')
     if (!captain) return res.status(404).json({ message: 'Driver account not found.' })
     const hasExistingDocuments = captain.kyc?.documents?.license?.content && captain.kyc?.documents?.identity?.content
     if (captain.kyc?.status === 'verified' || (captain.kyc?.status !== 'rejected' && hasExistingDocuments)) {

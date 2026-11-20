@@ -132,24 +132,29 @@ module.exports.confirmRide = async ({
 }
 
 module.exports.startRide = async ({ rideId, otp, captain }) => {
+    // status lets the controller answer with 400/404 instead of a generic 500
+    const fail = (message, status = 400) => Object.assign(new Error(message), { status });
+
     if (!rideId || !otp) {
-        throw new Error('Ride id and OTP are required');
+        throw fail('Ride id and OTP are required');
     }
 
+    // only the driver who accepted the order may start it
     const ride = await rideModel.findOne({
-        _id: rideId
+        _id: rideId,
+        captain: captain._id
     }).populate('user').populate('captain').select('+otp');
 
     if (!ride) {
-        throw new Error('Ride not found');
+        throw fail('Ride not found', 404);
     }
 
     if (ride.status !== 'accepted') {
-        throw new Error('Ride not accepted');
+        throw fail('Ride not accepted');
     }
 
     if (ride.otp !== otp) {
-        throw new Error('Invalid OTP');
+        throw fail('Invalid OTP');
     }
 
     await rideModel.findOneAndUpdate({

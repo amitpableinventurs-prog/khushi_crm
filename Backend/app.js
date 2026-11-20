@@ -13,6 +13,8 @@ const paymentRoutes = require('./routes/payment.routes');
 const notificationRoutes = require('./routes/notification.routes');
 const vendorRoutes = require('./routes/vendor.routes');
 const paymentController = require('./controllers/payment.controller');
+const swaggerUi = require('swagger-ui-express');
+const openApiSpec = require('./docs/openapi');
 
 const app = express();
 
@@ -36,6 +38,13 @@ app.use(cookieParser());
 app.get('/', (req, res) => {
     res.status(200).send('Uber Clone API is active and running');
 });
+
+// API docs: Swagger UI at /api-docs, raw spec at /api-docs.json
+app.get('/api-docs.json', (req, res) => res.json(openApiSpec));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec, {
+    customSiteTitle: 'Khushi Transport API',
+    swaggerOptions: { persistAuthorization: true },
+}));
 
 app.use('/users', userRoutes);
 app.use('/captains', captainRoutes);

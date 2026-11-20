@@ -118,7 +118,7 @@ module.exports.startRide = async (req, res) => {
         notificationService.notify('rider.ride_started', { rideId: ride._id });
         return res.status(200).json(ride);
     } catch (err) {
-        return res.status(500).json({ message: err.message });
+        return res.status(err.status || 500).json({ message: err.message });
     }
 };
 

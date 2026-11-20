@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import adminApi, { TOKEN_KEY, errorMessage } from './api'
+import logo from '../assets/kcs-logo.webp'
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('')
@@ -31,13 +32,11 @@ const AdminLogin = () => {
   }
 
   return (
-    <div className='min-h-screen flex items-center justify-center bg-black text-white font-sans p-6'>
+    <div className='admin-ui min-h-screen flex items-center justify-center bg-black text-white p-6'>
       <div className='w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl'>
         <div className='text-center mb-8'>
-          <span className='h-12 w-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 inline-flex items-center justify-center mb-3 shadow-lg shadow-emerald-500/30'>
-            <i className="ri-shield-user-fill text-2xl text-white"></i>
-          </span>
-          <h2 className='text-3xl font-black tracking-tight'>Admin Sign In</h2>
+          <img src={logo} alt='Khushi Transport' className='h-24 w-24 mx-auto mb-4 rounded-2xl bg-white object-contain p-1 shadow-lg shadow-blue-500/20' />
+          <h2 className='text-3xl font-extrabold tracking-tight'>Admin Sign In</h2>
           <p className='text-gray-400 text-sm mt-1'>Manage customers, drivers, orders and fares.</p>
         </div>
 

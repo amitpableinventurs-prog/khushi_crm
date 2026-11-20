@@ -5,7 +5,12 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        admin: [ '"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif' ],
+        display: [ 'Sora', '"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif' ],
+      },
+    },
   },
   plugins: [],
 }
